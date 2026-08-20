@@ -1,0 +1,43 @@
+# Visual Studio user settings and cache
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# Build output
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+Vulkan/x64/
+
+# Compiler and linker artifacts
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.iobj
+*.ipdb
+*.tlog
+*.log
+*.recipe
+*.ifc
+*.ifc.*
+
+# Generated executables/libraries
+*.exe
+*.lib
+*.exp
+
+# Keep the runtime DLL currently used by the project
+!Vulkan/SDL3.dll
+
+# OS/editor clutter
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
