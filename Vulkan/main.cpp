@@ -18,6 +18,7 @@
 #include"lve_uniform.h"
 #include"lve_camera.h"
 #include"lve_compute.h"
+#include"lve_terrain.h"
 #include <set>
 #include<vector>
 //----------------------------------------------------------------------------------------
@@ -34,6 +35,7 @@ lve::LveModel model;
 lve::LveUniform uniform;
 lve::LveCamera camera;
 lve::LveCompute compute(device, "shader/compute.comp.spv");
+lve::LveTerrain terrain;
 
 uint32_t currentFrame = 0;//当前帧
 
@@ -145,17 +147,17 @@ int main() {
 
 
 	//初始化地形
-	model.processArea(114514);
+	terrain.processArea(114514);
 
 
 	//创建计算着色器
-	VkDeviceSize computeBufferSize = sizeof(int32_t) * model.heightData.size();
+	VkDeviceSize computeBufferSize = sizeof(int32_t) * 	terrain.getHeightData().size();
 	compute.init(renderer.getMaxFramesInFlight(), computeBufferSize);
 	const float SCALE = 10000.0f;
-	std::vector<int32_t> heightUint(model.heightData.size());//高度数据
-	std::vector<uint32_t> flowUint(model.heightData.size(), 0);//流量数据
-	for (size_t i = 0; i < model.heightData.size(); i++) {
-		heightUint[i] = static_cast<int32_t>(model.heightData[i] * SCALE + 0.5f);
+	std::vector<int32_t> heightUint(	terrain.getHeightData().size());//高度数据
+	std::vector<uint32_t> flowUint(	terrain.getHeightData().size(), 0);//流量数据
+	for (size_t i = 0; i < 	terrain.getHeightData().size(); i++) {
+		heightUint[i] = static_cast<int32_t>(	terrain.getHeightData()[i] * SCALE + 0.5f);
 	}
 	for (int i = 0;i < 1;i++) {
 
@@ -174,7 +176,7 @@ int main() {
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		vkBeginCommandBuffer(computeCmdBuf, &beginInfo);
-		compute.recordComputeCommands(computeCmdBuf, 0, model.mapVertexCount); // 只跑一次，用第0帧的 descriptor
+		compute.recordComputeCommands(computeCmdBuf, 0, terrain.mapVertexCount); // 只跑一次，用第0帧的 descriptor
 		vkEndCommandBuffer(computeCmdBuf);
 
 		VkSubmitInfo submitInfo{};
@@ -193,8 +195,8 @@ int main() {
 		vkFreeCommandBuffers(device.getDevice(), device.getCommandPool(), 1, &computeCmdBuf);
 		//计算完毕拷回来
 		memcpy(heightUint.data(), compute.getMappedData(currentFrame), computeBufferSize);
-		for (size_t i = 0; i < model.heightData.size(); i++) {
-			model.heightData[i] = static_cast<float>(heightUint[i]) / SCALE;
+		for (size_t i = 0; i < 	terrain.getHeightData().size(); i++) {
+				terrain.getHeightData()[i] = static_cast<float>(heightUint[i]) / SCALE;
 		}
 
 		memcpy(flowUint.data(),compute.getFlowMappedData(0),sizeof(uint32_t)* flowUint.size());
@@ -203,24 +205,24 @@ int main() {
 		for (size_t i = 0; i < flowUint.size(); i++) {
 			float flow = std::log1p(static_cast<float>(flowUint[i]));
 			float maxValue = std::log1p(static_cast<float>(maxFlow));
-			model.vertices[i].flow = maxValue > 0.0f ? flow / maxValue : 0.0f;
+			terrain.getVertices()[i].flow = maxValue > 0.0f ? flow / maxValue : 0.0f;
 		}
 		//更新高度
-		for (int i = 0; i < model.vertices.size(); i++) {
-			model.vertices[i].pos.z = model.heightData[i];
+		for (int i = 0; i < terrain.getVertices().size(); i++) {
+			terrain.getVertices()[i].pos.z = 	terrain.getHeightData()[i];
 		}
 
 	}
 	// 重新计算法线
-	model.calculateNormal(); //
+	terrain.calculateNormal(); //
 
 	//放大地形
-	model.SetModelSize(2);
+	terrain.SetModelSize(2);
 
 	//[2选1]具体区别看model.h
 	//model.createVertexBuffer(device);//创建顶点缓冲区
-	model.createVertexBufferWithStaging(device);//创建顶点缓冲区,使用staging buffer
-	model.createIndexBufferWithStaging(device);//创建索引缓冲区
+	model.createVertexBufferWithStaging(device, terrain.getVertices());//创建顶点缓冲区,使用staging buffer
+	model.createIndexBufferWithStaging(device, terrain.getIndices());//创建索引缓冲区
 
 
 	pipeLine.distritbutePipeline();//分配管线
@@ -334,7 +336,7 @@ int main() {
 		
 		renderer.run(device.getDevice(), swapChain, device.getGraphicsQueue(), device.getPresentQueue(),
 			currentFrame, renderPass.getRenderPass(),model,uniform.getDescriptorSets(),pipeLine.getPipelineLayout(),
-			uniform, modelMatrix,camera.getView(),camera.getProjection(),compute,camera.getPos());
+			uniform, modelMatrix,camera.getView(),camera.getProjection(),compute,camera.getPos(),terrain.getIndices());
 		
 
 	}
