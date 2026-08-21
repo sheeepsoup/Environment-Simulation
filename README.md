@@ -78,38 +78,7 @@ Currently completed: terrain generation and hydraulic erosion simulation. More e
 - [GLM](https://github.com/g-truc/glm) — Mathematics library
 - [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) — Procedural noise generation
 
----
 
-## 📜 Development History
-
-## [0.0.1] - 2026-08-19
-
-### Added
-- Initial release with terrain generation
-- Vulkan rendering pipeline
-
-<img width="804" height="647" alt="Phase 1" src="https://github.com/user-attachments/assets/bb5a5fb2-18a4-4e28-8aef-5bd4c38841a3" />
-<img width="804" height="647" alt="Phase 1" src="https://github.com/user-attachments/assets/c0fbfaf5-c676-4461-97f1-35a841f64e27" />
-
-## [0.0.2] - 2026-08-20
-
-### Added
-- Weighted texture generation based on normal, height, and water flow
-
-<img width="1370" height="813" alt="Phase 2" src="https://github.com/user-attachments/assets/83ff3b64-2550-4994-8046-98b2bb54d957" />
-<img width="1370" height="813" alt="Phase 2" src="https://github.com/user-attachments/assets/57928593-696d-4564-9881-f21795718c63" />
-<img width="1370" height="813" alt="Phase 2" src="https://github.com/user-attachments/assets/269dc9f2-451a-4ba0-b302-f0cdae521a9a" />
-
-## [0.0.3] - 2026-08-21
-
-### Added
-- Optimized snow mountain generation, improved terrain generation function
-- Added fog effect
-
-<img width="1370" height="815" alt="Phase 3" src="https://github.com/user-attachments/assets/a6c191a5-ae1d-44a0-9cec-9a717fb9ee51" />
-<img width="1370" height="815" alt="Phase 3" src="https://github.com/user-attachments/assets/7b204538-b973-4bd4-8dad-682ff5278e24" />
-
----
 
 ## <a id="chinese"></a>🇨🇳 中文
 
@@ -171,25 +140,3 @@ Currently completed: terrain generation and hydraulic erosion simulation. More e
 - [GLM](https://github.com/g-truc/glm) — 数学运算库
 - [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) — 程序化噪声生成
 
-
-## 📜 项目历程
-## [0.0.1] - 2026-08-19
-### 新增
-- 首次发布，包含地形生成
-- Vulkan渲染管线
-<img width="804" height="647" alt="9f50686d8c9aa14b3048775af5872243" src="https://github.com/user-attachments/assets/bb5a5fb2-18a4-4e28-8aef-5bd4c38841a3" />
-<img width="804" height="647" alt="74e3de6838bc3ddde203f4dd6461bca5" src="https://github.com/user-attachments/assets/c0fbfaf5-c676-4461-97f1-35a841f64e27" />
-
-## [0.0.2] - 2026-08-20
-### 新增
-- 基于法线和高度和流量的权重纹理生成
-<img width="1370" height="813" alt="2e452b485b3d38e124d44b131728a496" src="https://github.com/user-attachments/assets/83ff3b64-2550-4994-8046-98b2bb54d957" />
-<img width="1370" height="813" alt="142d3bafe3ce540939af9dd880dd86de" src="https://github.com/user-attachments/assets/57928593-696d-4564-9881-f21795718c63" />
-<img width="1370" height="813" alt="6284a9ab74ee20bd1546151de97f8fb6" src="https://github.com/user-attachments/assets/269dc9f2-451a-4ba0-b302-f0cdae521a9a" />
-
-## [0.0.3] - 2026-08-21
-### 新增
-- 优化了雪山的生成效果,改进了地形生成函数
-- 添加了迷雾效果
-<img width="1370" height="815" alt="faec3c47076a1febc4e78b21814e1a55" src="https://github.com/user-attachments/assets/a6c191a5-ae1d-44a0-9cec-9a717fb9ee51" />
-<img width="1370" height="815" alt="9e1988772e863b4e4c39a3346b51ed0d" src="https://github.com/user-attachments/assets/7b204538-b973-4bd4-8dad-682ff5278e24" />
