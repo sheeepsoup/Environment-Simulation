@@ -1,0 +1,117 @@
+name: Build and publish release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - release-config.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Windows x64 release
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v6
+
+      - name: Read release configuration and create bilingual notes
+        id: release
+        shell: pwsh
+        run: ./.github/scripts/prepare-release.ps1
+
+      - name: Stop if this version already exists
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $env:RELEASE_TAG already exists. Increase version in release-config.json."
+          }
+
+      - name: Set up Vulkan SDK
+        uses: humbletim/setup-vulkan-sdk@v1.2.1
+        with:
+          vulkan-query-version: 1.4.304.1
+          vulkan-components: Vulkan-Headers, Vulkan-Loader
+          vulkan-use-cache: true
+
+      - name: Check out SDL
+        uses: actions/checkout@v6
+        with:
+          repository: libsdl-org/SDL
+          ref: release-3.2.20
+          path: dependencies/SDL
+
+      - name: Check out GLM
+        uses: actions/checkout@v6
+        with:
+          repository: g-truc/glm
+          ref: 1.0.1
+          path: dependencies/glm
+
+      - name: Check out FastNoiseLite
+        uses: actions/checkout@v6
+        with:
+          repository: Auburn/FastNoiseLite
+          ref: v1.1.1
+          path: dependencies/FastNoiseLite
+
+      - name: Build SDL3
+        shell: pwsh
+        run: |
+          cmake -S dependencies/SDL -B dependencies/SDL/build -A x64 -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
+          cmake --build dependencies/SDL/build --config Release --parallel
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v3
+        with:
+          msbuild-architecture: x64
+
+      - name: Build Environment Smulation
+        shell: pwsh
+        run: |
+          msbuild Vulkan/Vulkan.vcxproj /m /t:Rebuild `
+            /p:Configuration=Release /p:Platform=x64 `
+            /p:VulkanSdkDir="$env:VULKAN_SDK" `
+            /p:GlmIncludeDir="$env:GITHUB_WORKSPACE/dependencies/glm" `
+            /p:SdlIncludeDir="$env:GITHUB_WORKSPACE/dependencies/SDL/include" `
+            /p:SdlLibraryDir="$env:GITHUB_WORKSPACE/dependencies/SDL/build/Release" `
+            /p:FastNoiseLiteIncludeDir="$env:GITHUB_WORKSPACE/dependencies/FastNoiseLite/Cpp"
+
+      - name: Package Windows build
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          $package = 'release-output/Environment-Smulation-Windows-x64'
+          New-Item -ItemType Directory -Path "$package/shader" -Force | Out-Null
+          Copy-Item 'x64/Release/Vulkan.exe' $package
+          Copy-Item 'dependencies/SDL/build/Release/SDL3.dll' $package
+          Copy-Item 'Vulkan/shader/*.spv' "$package/shader"
+          Copy-Item 'README.md' $package
+          Compress-Archive -Path "$package/*" -DestinationPath "release-output/Environment-Smulation-$env:RELEASE_TAG-Windows-x64.zip"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: ${{ steps.release.outputs.name }}
+          body_path: release-output/RELEASE_BODY.md
+          draft: ${{ steps.release.outputs.draft }}
+          prerelease: ${{ steps.release.outputs.prerelease }}
+          fail_on_unmatched_files: true
+          files: |
+            release-output/Environment-Smulation-${{ steps.release.outputs.tag }}-Windows-x64.zip
+            release-output/RELEASE_NOTES.en.md
+            release-output/RELEASE_NOTES.cn.md

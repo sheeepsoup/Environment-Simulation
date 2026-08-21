@@ -1,0 +1,44 @@
+{
+  "$schema": "./.github/release-config.schema.json",
+  "version": "0.0.4",
+  "title": {
+    "en": "Terrain Rendering Update",
+    "cn": "地形渲染更新"
+  },
+  "draft": false,
+  "prerelease": false,
+  "summary": {
+    "en": "This release improves terrain generation and prepares automated Windows builds.",
+    "cn": "此版本改进了地形生成，并加入 Windows 自动构建发布流程。"
+  },
+  "changes": {
+    "added": {
+      "en": [
+        "Automated GitHub Release builds for Windows x64."
+      ],
+      "cn": [
+        "新增 Windows x64 的 GitHub Release 自动构建。"
+      ]
+    },
+    "changed": {
+      "en": [
+        "Improved the procedural terrain generation implementation."
+      ],
+      "cn": [
+        "改进程序化地形生成实现。"
+      ]
+    },
+    "fixed": {
+      "en": [],
+      "cn": []
+    },
+    "knownIssues": {
+      "en": [
+        "A Vulkan-capable GPU and current graphics driver are required."
+      ],
+      "cn": [
+        "运行程序需要支持 Vulkan 的显卡及较新的显卡驱动。"
+      ]
+    }
+  }
+}

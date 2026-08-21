@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Environment Smulation release configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "title", "draft", "prerelease", "summary", "changes"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$" },
+    "title": { "$ref": "#/$defs/localizedText" },
+    "draft": { "type": "boolean" },
+    "prerelease": { "type": "boolean" },
+    "summary": { "$ref": "#/$defs/localizedText" },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["added", "changed", "fixed", "knownIssues"],
+      "properties": {
+        "added": { "$ref": "#/$defs/localizedList" },
+        "changed": { "$ref": "#/$defs/localizedList" },
+        "fixed": { "$ref": "#/$defs/localizedList" },
+        "knownIssues": { "$ref": "#/$defs/localizedList" }
+      }
+    }
+  },
+  "$defs": {
+    "localizedText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["en", "cn"],
+      "properties": {
+        "en": { "type": "string", "minLength": 1 },
+        "cn": { "type": "string", "minLength": 1 }
+      }
+    },
+    "localizedList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["en", "cn"],
+      "properties": {
+        "en": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "cn": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}
