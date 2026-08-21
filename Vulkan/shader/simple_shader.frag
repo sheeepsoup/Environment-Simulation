@@ -1,4 +1,4 @@
-#version 450
+﻿#version 450
 layout(location = 0) out vec4 outColor;
 
 
@@ -6,13 +6,14 @@ layout(location = 0) in vec3 fragColor;//[x]->当前点的高度
 layout(location = 1) in vec3 fragNormal;//法线
 layout(location = 2) in vec3 fragWorldPosition;
 layout(location = 3) in float fragFlow;
-
+layout(location = 4) in vec4 fragCameraPos;
 const vec3 dirFix = vec3(1,-1,0);//方向修饰,模拟现实特定方向风的风化
 const vec3 worldUp = vec3(0,0,1);
 const vec3 grassColor={ 0.18f, 0.38f, 0.14f};
 const vec3 dirtColor={0.34f, 0.24f, 0.14f};
 const vec3 rockColor={0.38f, 0.39f, 0.37f};
 const vec3 snowColor={0.88f, 0.92f, 0.95f};
+const vec3 fogColor = vec3(0.38, 0.62, 0.82);
 #define HASHSCALE1 .1031
 #define HASHSCALE3 vec3(.1031, .1030, .0973)
 #define HASHSCALE4 vec4(1031, .1030, .0973, .1099)
@@ -79,8 +80,8 @@ vec4 getTexureIndex(vec3 normal,vec3 pos){
 	float grassWeight = mix(grassHeightWeight, grassNormalWeight, 0.5f);//草原权重
     float grassAltitudeFade =
     1.0 - smoothstep(6.0, 9.0, materialHeight);
+    grassWeight *= grassAltitudeFade;
 
-grassWeight *= grassAltitudeFade;
 	//泥土权重
 	float dirtNormalWeight = smoothstep(0.0f, 0.35f, pot);//泥土法线权重
 	float dirtHeightWeight = smoothstep(3.0f, 6.0f, materialHeight);//泥土高度权重
@@ -99,16 +100,21 @@ grassWeight *= grassAltitudeFade;
 	float snowNormalWeight = smoothstep(0.55f, 0.90f, upness);//雪地法线权重
 	float snowHeightWeight = smoothstep(12.0f, 15.0f, materialHeight);//雪地高度权重
 	float baseSnow = snowHeightWeight;//雪地权重
-    float snowChannel = smoothstep(0.05, 0.40, fragFlow);//雪沟
-    float mountainMask2 = smoothstep(5.0, 9.0, materialHeight);
-    float slopeRetention = smoothstep(0.35, 0.85, upness);
-    //排除完全平坦区域
-    float moderateSlope =smoothstep(0.08, 0.22, slope);
-    //沟壑雪可以向稍低海拔延伸
-    float channelHeightMask = smoothstep(7.5, 10.0, materialHeight);
-    float channelSnow = snowChannel * moderateSlope * channelHeightMask;
-    float snowCoverage = clamp(max(baseSnow, channelSnow), 0.0, 1.0);
+   
 
+    float snowChannel = smoothstep(0.05, 0.40, fragFlow);//流量影响的沟壑
+    float moderateSlope = smoothstep(0.08, 0.22, slope);//去除平坦区域流量影响
+    float channelHeightMask = smoothstep(7.5, 10.0, materialHeight);//沟壑高度限制区间
+    float lowerChannelSnow = snowChannel * moderateSlope * channelHeightMask;//低处的雪沟壑
+    float upperLargeNoise = Noise(pos.xy * 0.05 + vec2(31.7, 17.3));//俩噪声扰动
+    float upperSmallNoise = Noise(pos.xy * 0.25 + vec2(11.9, 47.1));
+    float upperNoise = (upperLargeNoise * 0.75 + upperSmallNoise * 0.25) * 2.0 - 1.0;//调整2合并-1~1
+    float upperSnowHeight = materialHeight + upperNoise * 0.75 + lowerChannelSnow * 1.2;//噪声调整一波高度[影响效果]
+    float upperBaseSnow = smoothstep(12.0, 15.0, upperSnowHeight);//高处的基础雪生成
+
+    //合并低处雪沟和上方雪圈
+    float snowCoverage = 1.0 - (1.0 - lowerChannelSnow) * (1.0 - upperBaseSnow);
+    snowCoverage = clamp(snowCoverage, 0.0, 1.0);
 
     return vec4(grassWeight,dirtWeight,rockWeight,snowCoverage);
 }
@@ -139,11 +145,7 @@ vec3 getTextureColor(vec4 weight){
 void main(){
    
     vec3 normal = normalize(fragNormal);
-
-    //计算纹理
-    vec4 TexutreAttribute = getTexureIndex(normal,fragWorldPosition);
-
-    // 输出
+    vec4 TexutreAttribute = getTexureIndex(normal,fragWorldPosition);//计算纹理
     vec4 colora = vec4(getTextureColor(TexutreAttribute), 1.0);
 
     //光照计算
@@ -152,6 +154,13 @@ void main(){
     float ambient = 0.20;
 
     vec3 finalColor = colora.xyz *(ambient + diffuse * 0.80);
+
+
+
+    //-----------------------------------------------------------------------计算雾
+    float dist = length(fragCameraPos.xyz - fragWorldPosition);
+    float fogValue = 1 - smoothstep(80.0f,250.0f,dist);
+    finalColor = mix(fogColor,finalColor,fogValue);
 
     outColor = vec4(finalColor, 1.0);
    //outColor = vec4(vec3(fragFlow), 1.0);

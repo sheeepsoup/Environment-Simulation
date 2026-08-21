@@ -321,7 +321,9 @@ namespace lve {
 		float ridge = 1.0 - abs(terrainValue);
 		// 再乘方让他变得更尖锐
 		ridge = ridge * ridge;
-		float hillHeight = ridge * terrainHeighLimite;
+		float terrain01 = terrainValue * 0.5f + 0.5f;
+		float hillShape = smoothstep(0.30f, 0.72f, terrain01);
+		float hillHeight = hillShape * 3.5f;
 
 		const float mountainValue = noise.mountainNoise.GetNoise(warpedX, warpedY);
 		const float mountain01 = mountainValue * 0.5f + 0.5f;

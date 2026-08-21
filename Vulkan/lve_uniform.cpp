@@ -41,14 +41,14 @@ namespace lve {
 		}
 
 	}
-	void LveUniform::updateUniformBuffer(uint32_t currentImage,VkExtent2D extent, const glm::mat4& modelMatrix, const glm::mat4& view, const glm::mat4& proj) {
+	void LveUniform::updateUniformBuffer(uint32_t currentImage,VkExtent2D extent, const glm::mat4& modelMatrix, const glm::mat4& view, const glm::mat4& proj,glm::vec3 cameraPos) {
 	
 		//UBO
 		UniformBufferObject ubo{};
 		ubo.model = modelMatrix;
 		ubo.view = view;
 		ubo.proj = proj;
-
+		ubo.cameraPos = glm::vec4(cameraPos,1.0f);
 		memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 	}
 	void LveUniform::createDescriptorPool(uint32_t MAX_FRAMES_IN_FLIGHT,VkDevice device) {

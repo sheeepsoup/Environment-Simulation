@@ -18,6 +18,7 @@ namespace lve {
 		void up_and_down(bool up, float deltaTime);//向上或者向下 true->上 false->下
 		void rotate(float mouseDeltaX, float mouseDeltaY);//旋转摄像机
 		const glm::mat4& getProjection() const {return projectionMatrix;}
+		glm::vec3 getPos() { return postion; };
 	private:
 		float speed = 16.0f;
 		glm::vec3 postion{0.0f};

@@ -58,12 +58,12 @@ namespace lve {
 	}
 	void LveRenderer::run(VkDevice device, LveSwapChain& swapChain, VkQueue graphicsQueue, VkQueue presentQueue, uint32_t& currentFrame,
 		VkRenderPass renderPass, LveModel& model,const std::vector<VkDescriptorSet> descriptorSets, VkPipelineLayout pipelineLayout,LveUniform uniform,
-		const glm::mat4 modelMatirx,const glm::mat4 view,const glm::mat4 proj,LveCompute& compute) {
+		const glm::mat4 modelMatirx,const glm::mat4 view,const glm::mat4 proj,LveCompute& compute,glm::vec3 cameraPos) {
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);//等待栅栏,直到渲染完成
 		vkAcquireNextImageKHR(device, swapChain.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);//获取下一张交换链图片的索引,并将imageAvailableSemaphore信号量设置为在图像可用时发出信号
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);//重置栅栏,以便下一次使用
 		//获取交换链图像
-		uniform.updateUniformBuffer(currentFrame, swapChain.getSwapChainExtent(), modelMatirx, view,proj);//更新上传ubo
+		uniform.updateUniformBuffer(currentFrame, swapChain.getSwapChainExtent(), modelMatirx, view,proj, cameraPos);//更新上传ubo
 	
 		vkResetCommandBuffer(commandBuffers[currentFrame], 0);//重置命令缓冲区,以便重新记录命令缓冲区
 		recordCommandBuffer(commandBuffers[currentFrame], imageIndex,

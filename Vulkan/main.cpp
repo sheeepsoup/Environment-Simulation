@@ -328,7 +328,7 @@ int main() {
 		
 		renderer.run(device.getDevice(), swapChain, device.getGraphicsQueue(), device.getPresentQueue(),
 			currentFrame, renderPass.getRenderPass(),model,uniform.getDescriptorSets(),pipeLine.getPipelineLayout(),
-			uniform, modelMatrix,camera.getView(),camera.getProjection(),compute);
+			uniform, modelMatrix,camera.getView(),camera.getProjection(),compute,camera.getPos());
 		
 
 	}
