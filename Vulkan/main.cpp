@@ -8,7 +8,6 @@
 #include<cstdlib>
 #include<iostream>
 #include<stdexcept>
-
 #include"lve_windows.h"
 #include"lve_pipeline.h"
 #include"lve_device.h"
@@ -21,6 +20,10 @@
 #include"lve_compute.h"
 #include <set>
 #include<vector>
+//----------------------------------------------------------------------------------------
+//本地无限地形生成开关
+bool unlimitedArea = false;
+//----------------------------------------------------------------------------------------
 lve::LveWindows win(1366,768,"从零开始的vulkan生活");//窗口
 lve::Lvepipeline pipeLine("shader/simple_shader.vert.spv", "shader/simple_shader.frag.spv");
 lve::LveDevice device;
@@ -210,6 +213,9 @@ int main() {
 	}
 	// 重新计算法线
 	model.calculateNormal(); //
+
+	//放大地形
+	model.SetModelSize(2);
 
 	//[2选1]具体区别看model.h
 	//model.createVertexBuffer(device);//创建顶点缓冲区

@@ -23,6 +23,11 @@ namespace lve {
 		void initNoise(int seed);//初始化噪声
 		void processArea(int seed);//生成地形
 		void calculateNormal();//计算法线
+		void SetModelSize(uint32_t scale) {//缩放地形大小
+			for (auto& vertex : vertices) {
+				vertex.pos *= scale;
+			}
+		}
 		struct Vertex {
 			glm::vec3 pos;
 			glm::vec3 color;

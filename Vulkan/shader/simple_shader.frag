@@ -1,4 +1,4 @@
-﻿#version 450
+#version 450
 layout(location = 0) out vec4 outColor;
 
 
@@ -14,6 +14,8 @@ const vec3 dirtColor={0.34f, 0.24f, 0.14f};
 const vec3 rockColor={0.38f, 0.39f, 0.37f};
 const vec3 snowColor={0.88f, 0.92f, 0.95f};
 const vec3 fogColor = vec3(0.38, 0.62, 0.82);
+const float TERRAIN_SCALE = 2.0f;
+
 #define HASHSCALE1 .1031
 #define HASHSCALE3 vec3(.1031, .1030, .0973)
 #define HASHSCALE4 vec4(1031, .1030, .0973, .1099)
@@ -145,7 +147,7 @@ vec3 getTextureColor(vec4 weight){
 void main(){
    
     vec3 normal = normalize(fragNormal);
-    vec4 TexutreAttribute = getTexureIndex(normal,fragWorldPosition);//计算纹理
+    vec4 TexutreAttribute = getTexureIndex(normal,fragWorldPosition / TERRAIN_SCALE);//计算纹理
     vec4 colora = vec4(getTextureColor(TexutreAttribute), 1.0);
 
     //光照计算

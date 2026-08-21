@@ -155,6 +155,7 @@
     <ClCompile Include="lve_renderPass.cpp" />
     <ClCompile Include="lve_renderPass.h" />
     <ClCompile Include="lve_swapChain.cpp" />
+    <ClCompile Include="lve_terrain.cpp" />
     <ClCompile Include="lve_uniform.cpp" />
     <ClCompile Include="lve_windows.cpp" />
     <ClCompile Include="main.cpp" />
@@ -168,6 +169,7 @@
     <ClInclude Include="lve_swapChain.h" />
     <ClInclude Include="lve_uniform.h" />
     <ClInclude Include="lve_windows.h" />
+    <ClInclude Include="lve_terrain.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="compile.bat" />

@@ -57,6 +57,9 @@
     <ClCompile Include="lve_compute.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="lve_terrain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lve_windows.h">
@@ -81,6 +84,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="lve_compute.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lve_terrain.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
