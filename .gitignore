@@ -41,3 +41,5 @@ Thumbs.db
 *.tmp
 *.bak
 
+# Locally generated release files
+release-output/
