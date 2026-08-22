@@ -70,9 +70,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\Code\vulkan\SDK\Include;D:\Code\lib\glm\glm;D:\Code\lib\SDL\SDL-main\include;D:\Code\lib\noise\FastNoiseLite-master\Cpp;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Code\vulkan\SDK\Lib;D:\Code\lib\SDL\SDL-main\build\Release;$(LibraryPath)</LibraryPath>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <VulkanSdkDir Condition="'$(VulkanSdkDir)'==''">D:\Code\vulkan\SDK</VulkanSdkDir>
+    <GlmIncludeDir Condition="'$(GlmIncludeDir)'==''">D:\Code\lib\glm\glm</GlmIncludeDir>
+    <SdlIncludeDir Condition="'$(SdlIncludeDir)'==''">D:\Code\lib\SDL\SDL-main\include</SdlIncludeDir>
+    <SdlLibraryDir Condition="'$(SdlLibraryDir)'==''">D:\Code\lib\SDL\SDL-main\build\Release</SdlLibraryDir>
+    <FastNoiseLiteIncludeDir Condition="'$(FastNoiseLiteIncludeDir)'==''">D:\Code\lib\noise\FastNoiseLite-master\Cpp</FastNoiseLiteIncludeDir>
+    <IncludePath>$(VulkanSdkDir)\Include;$(GlmIncludeDir);$(SdlIncludeDir);$(FastNoiseLiteIncludeDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(VulkanSdkDir)\Lib;$(SdlLibraryDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -135,10 +140,12 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
