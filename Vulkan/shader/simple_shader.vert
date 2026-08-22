@@ -14,7 +14,7 @@ layout(location = 2) in vec3 inNormal;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec3 fragWorldPosition;
-layout(location = 4) out vec3 fragCameraPos; 
+layout(location = 4) out vec4 fragCameraPos; 
 
 layout(location = 3) in float inFlow;
 layout(location = 3) out float fragFlow;
@@ -22,7 +22,7 @@ layout(location = 3) out float fragFlow;
 
 void main() {
     vec4 pos = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0); 
-    fragCameraPos = ubo.cameraPos;
+    fragCameraPos = vec4(ubo.cameraPos,1.0f);
     fragFlow = inFlow;
     gl_Position = pos;
     fragColor = inColor;
