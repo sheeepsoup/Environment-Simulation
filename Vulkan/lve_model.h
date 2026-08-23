@@ -64,14 +64,18 @@ namespace lve {
 
 		void clean(VkDevice device);
 		void createVertexBuffer(LveDevice device, std::vector<Vertex>& vertices);//这是持续cpu上传的函数			[二选一] 用途:用于顶点在cpu端频繁更新的情况,例如粒子系统,动态顶点等
-		void createVertexBufferWithStaging(LveDevice lveDevice, std::vector<Vertex>& vertices);//这是上传到gpu内存后用的函数[二选一] 用途:用于顶点在cpu端不频繁更新的情况,例如静态模型,静态网格等
-		void createIndexBufferWithStaging(LveDevice& lveDevice, std::vector<uint32_t>& indices);//创建索引缓冲区
+		void createVertexBufferWithStaging(LveDevice &lveDevice, const std::vector<Vertex>& vertices);//这是上传到gpu内存后用的函数[二选一] 用途:用于顶点在cpu端不频繁更新的情况,例如静态模型,静态网格等
+		void createIndexBufferWithStaging(LveDevice& lveDevice, const std::vector<uint32_t>& indices);//创建索引缓冲区
 		void bindVertex(VkCommandBuffer commandBuffer);//绑定vertex
 		void bindIndexBuffer(VkCommandBuffer commandBuffer);//绑定索引缓冲区
 		void draw_index_mode(VkCommandBuffer commandBuffer, std::vector<uint32_t>& indices);//索引模式的绘制
 		void draw(VkCommandBuffer commandBuffer, std::vector<Vertex>& vertices);//普通绘制
-
-	
+		void destroyMeshBuffers(VkDevice device);
+		void replaceMesh(
+			LveDevice& device,
+			const std::vector<Vertex>& vertices,
+			const std::vector<uint32_t>& indices
+		);
 
 	private:
 		VkBuffer vertexBuffer = VK_NULL_HANDLE;//顶点缓冲区
@@ -86,7 +90,7 @@ namespace lve {
 
 
 		
-		void fillInVertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize bufferSize, VkDeviceMemory bufferMemory, std::vector<Vertex>& vertices);//填充顶点缓冲区
+		void fillInVertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize bufferSize, VkDeviceMemory bufferMemory, const std::vector<Vertex>& vertices);//填充顶点缓冲区
 	
 		
 		struct TerrainDeltaGrid //线程专用的土地属性

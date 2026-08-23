@@ -9,13 +9,16 @@
 #include <random>
 #include<thread>
 #include"lve_model.h"
-
+#include"lve_compute.h"
+#include <unordered_map>
 namespace lve {
 	class LveTerrain
 	{
 	public:
 		void initNoise(int seed);//初始化噪声
 		void processArea(int seed);//生成地形
+		void processAreaInTime(glm::ivec2 playerBlockPos, LveCompute& compute, LveDevice& device, float HEIGHT_FIXED_SCALE);//实时生成区块
+		void initArea(int seed);//初始化地形
 		void calculateNormal();//计算法线
 		void SetModelSize(uint32_t scale) {//缩放地形大小
 			for (auto& vertex : vertices) {
@@ -30,7 +33,12 @@ namespace lve {
 		std::vector<LveModel::Vertex> &getVertices() { return vertices; };
 		const std::vector<LveModel::Vertex>& getVertices() const { return vertices; };
 		std::vector<float> &getHeightData() { return heightData; };
-
+		int getBlockVertexNum() const {
+			return BlockVertexNum;
+		}
+		float getBlockDistance() const {
+			return BlockDistance;
+		}
 		int mapVertexCount;//地图顶点大小[x/y方向]
 	private:
 		#define EROSON_EXTENT 1000000//侵蚀n次
@@ -47,10 +55,19 @@ namespace lve {
 		glm::vec3 WorldUp = glm::vec3(0.0f, 0.0f, 1.0f);
 		float terrainHeighLimite = 6.0f;//丘陵的最大高度
 		int BlockNum = 50;//区块数量
-		int BlockVertexNum = 20;//每个区块x/y对应的顶点数,该区块含有n*n个顶点
-		float BlockDistance = 5.0;//每个区块的x/y对应的距离大小
+		int BlockVertexNum = 300;//每个区块x/y对应的顶点数,该区块含有n*n个顶点
+		float BlockDistance = 50.0;//每个区块的x/y对应的距离大小
 		uint32_t cpuThreadNum;//cpu线程数
 
+		struct TerrainBlock {
+			int blockX;
+			int blockY;
+			bool eroded = false;
+			std::vector<LveModel::Vertex> vertices;
+			std::vector<uint32_t> indices;
+			std::vector<float> heightData;
+			std::vector<uint32_t> flowData;
+		};
 		class CNoise
 		{
 		public:
@@ -83,7 +100,7 @@ namespace lve {
 		std::vector<float> heightData;//高度数据
 		std::vector<WaterDrop> erosion;//腐蚀
 		std::vector<uint32_t> indices;//这里indice用于索引缓冲区,数字代表第n个三角形的点,详细问gpt不好解释
-
+		std::unordered_map<int64_t, TerrainBlock> blocks;//区块
 
 		float getHeight(float WorldX, float WorldY, bool isFirst);
 		glm::vec3 calculateNormal(float worldX, float worldY, float sampleDistance);
@@ -110,7 +127,21 @@ namespace lve {
 		void changeHeightAround(const glm::vec2& position, float heightChange);
 		float sampleHeight(const glm::vec2& position);//四点取样获取新的高度
 		void threadRunErosion();//线程跑腐蚀
+		int64_t getBlockKey(int blockX, int blockY)const;//获取区块的索引值
+		void processOneBlockVertices(int blockX, int blockY);//生成一个区块顶点
+		void removeOneBlock(int blockX, int blockY);//删除一个区块
+		bool hasBlock(int blockX, int blockY);//检验一个区块是否存在
+		void rebuildCombinedMesh(glm::ivec2 playerBlockPos);
+		float getBlockHeight(
+			int blockX,
+			int blockY,
+			int localX,
+			int localY
+		) const;
 
-
+		void calculateBlockNormals(
+			int blockX,
+			int blockY
+		);
 	};
 }

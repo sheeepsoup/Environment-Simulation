@@ -78,7 +78,29 @@ void clean() {
 	device.clean(device.getDevice(), device.getInstance());
 }
 
+glm::ivec2 getPlayerBlockPosition(
+	const glm::vec3& cameraPosition,
+	float blockDistance,
+	float terrainScale
+) {
+	const float scaledBlockDistance =
+		blockDistance * terrainScale;
 
+	return {
+		static_cast<int>(
+			std::floor(
+				cameraPosition.x /
+				scaledBlockDistance
+			)
+		),
+		static_cast<int>(
+			std::floor(
+				cameraPosition.y /
+				scaledBlockDistance
+			)
+		)
+	};
+}
 
 
 int main() {
@@ -151,47 +173,41 @@ int main() {
 
 	auto start = Clock::now();
 	//初始化地形
-	terrain.processArea(seed);
+	terrain.initArea(seed);
+
+	glm::ivec2 initialPlayerBlock{ 0, 0 };
+
+	
 
 
 	auto afterTerrain = Clock::now();
 	std::cout << "terrain generation: "<< std::chrono::duration<float>(afterTerrain - start).count() << " seconds\n";
 
 	//创建计算着色器
-	VkDeviceSize computeBufferSize = sizeof(int32_t) * terrain.getHeightData().size();
-	compute.init(renderer.getMaxFramesInFlight(), computeBufferSize);
+
+	const int erosionWidth =
+		5 * (terrain.getBlockVertexNum() - 1) + 1;
+
+	const VkDeviceSize computeBufferSize =
+		sizeof(int32_t) *
+		static_cast<size_t>(erosionWidth) *
+		erosionWidth;
+
+	compute.init(
+		renderer.getMaxFramesInFlight(),
+		computeBufferSize
+	);
+	//进入循环前先生成一次
+	terrain.processAreaInTime(
+		initialPlayerBlock,
+		compute,
+		device,
+		HEIGHT_FIXED_SCALE
+	);
+
+
 
 	
-	//侵蚀模拟计算
-	std::vector<int32_t> heightUint(terrain.getHeightData().size());//高度数据
-	std::vector<uint32_t> flowUint(	terrain.getHeightData().size(), 0);//流量数据
-	auto erosionStart = Clock::now();
-	for (size_t i = 0; i < 	terrain.getHeightData().size(); i++) {
-		heightUint[i] = static_cast<int32_t>(	terrain.getHeightData()[i] * HEIGHT_FIXED_SCALE + 0.5f);
-	}
-	compute.runErosionSync(device, 0, terrain.getMapVertexNum(), heightUint, flowUint, computeBufferSize);
-	terrain.updateHeightFlow(heightUint, flowUint, HEIGHT_FIXED_SCALE);
-	
-
-	
-	auto erosionEnd = Clock::now();
-
-	std::cout << "GPU erosion: "
-		<< std::chrono::duration<float>(
-			erosionEnd - erosionStart).count()
-		<< " seconds\n";
-	// 重新计算法线
-	auto normalStart = Clock::now();
-	terrain.calculateNormal(); //
-	auto normalEnd = Clock::now();
-	std::cout << "normal calculation: "
-		<< std::chrono::duration<float>(
-			normalEnd - normalStart).count()
-		<< " seconds\n";
-
-	//放大地形
-	terrain.SetModelSize(2);
-
 	//[2选1]具体区别看model.h
 	//model.createVertexBuffer(device);//创建顶点缓冲区
 	model.createVertexBufferWithStaging(device, terrain.getVertices());//创建顶点缓冲区,使用staging buffer
@@ -262,7 +278,24 @@ int main() {
 
 	modelMatrix = glm::scale(modelMatrix,glm::vec3{ 1.0f, 1.0f, 1.0f });
 
+	//放大地形
 
+	modelMatrix = glm::scale(
+		glm::mat4(1.0f),
+		glm::vec3(2.0f)
+	);
+
+	constexpr float TERRAIN_SCALE = 2.0f;
+
+	glm::ivec2 currentPlayerBlock =
+		getPlayerBlockPosition(
+			camera.getPos(),
+			terrain.getBlockDistance(),
+			TERRAIN_SCALE
+		);
+
+	glm::ivec2 lastPlayerBlock =
+		currentPlayerBlock;
 
 
 	while (1) {
@@ -307,6 +340,39 @@ int main() {
 			return EXIT_SUCCESS;
 		}
 		
+		//检测是否跨区块了,跨区块就更新地图
+		currentPlayerBlock =
+			getPlayerBlockPosition(
+				camera.getPos(),
+				terrain.getBlockDistance(),
+				TERRAIN_SCALE
+			);
+
+		if (currentPlayerBlock != lastPlayerBlock) {
+			terrain.processAreaInTime(
+				currentPlayerBlock,
+				compute,
+				device,
+				HEIGHT_FIXED_SCALE
+			);
+
+			//确保GPU不再使用旧顶点/索引缓冲
+			vkDeviceWaitIdle(
+				device.getDevice()
+			);
+
+			model.replaceMesh(
+				device,
+				terrain.getVertices(),
+				terrain.getIndices()
+			);
+
+			lastPlayerBlock =
+				currentPlayerBlock;
+
+		}
+
+
 		renderer.run(device.getDevice(), swapChain, device.getGraphicsQueue(), device.getPresentQueue(),
 			currentFrame, renderPass.getRenderPass(),model,uniform.getDescriptorSets(),pipeLine.getPipelineLayout(),
 			uniform, modelMatrix,camera.getView(),camera.getProjection(),compute,camera.getPos(),terrain.getIndices());

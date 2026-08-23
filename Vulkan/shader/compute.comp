@@ -9,6 +9,8 @@ layout(binding = 1) buffer FlowBuffer {
 layout(push_constant) uniform PushConstants {
     int width;
     int waterDorpNum;
+    int spawnMin;
+    int spawnMax;
 } pc;
 
 const int   WATER_MAX_STEP = 500;
@@ -71,14 +73,23 @@ void main() {
     uint localSeed = dropletID * 114514u;
     uint seedX = dropletID * 114514u + 12345u;
     uint seedY = dropletID * 114514u + 98765u;
-      float x = 1.0 + float(hash(seedX) % (pc.width - 3));
-    float y = 1.0 + float(hash(seedY) % (pc.width - 3));
+
+    uint spawnRange =
+    uint(pc.spawnMax - pc.spawnMin + 1);
+
+    float x =
+        float(pc.spawnMin) +
+        float(hash(seedX) % spawnRange);
+
+    float y =
+        float(pc.spawnMin) +
+        float(hash(seedY) % spawnRange);
     vec2  pos = vec2(x, y);
     vec2  dir = vec2(0.0);
     float speed = 1.0;
     float water = 1.0;
     float sediment = 0.0;
-
+    vec2 lastValidPos = pos;
     //循环模拟（代替递归）
     for (int step = 0; step < WATER_MAX_STEP; step++) {
         if (water < MIN_WATER || speed < MIN_SPEED) break;
@@ -103,8 +114,14 @@ void main() {
         pos += dir;
 
         //边界检查（如果你用 pc.widthxpc.width）
-        if (pos.x < 1.0 || pos.x > float(pc.width - 2) ||
-            pos.y < 1.0 || pos.y > float(pc.width - 2)) break;
+       if (pos.x < 1.0 ||
+            pos.x > float(pc.width - 2) ||
+            pos.y < 1.0 ||
+            pos.y > float(pc.width - 2)) {
+            break;
+        }
+
+        lastValidPos = pos;
 
         //流量增加[用于frag计算雪地/泥土/草那]
         ivec2 flowPoint = ivec2(floor(pos));
@@ -141,5 +158,7 @@ void main() {
         }
     }
     // 最后把剩余泥沙沉积在最后位置
-    if (sediment > 0.0) addHeight(pos, sediment);
+    if (sediment > 0.0) {
+        addHeight(lastValidPos, sediment);
+    }
 }

@@ -132,7 +132,7 @@ namespace lve {
 		//清理顶点
 		vertices.clear();
 		indices.clear();
-		
+
 		initNoise(seed);//初始化噪声
 		const int chunkCount = 2 * BlockNum - 1;
 		const int mapVertexCount = chunkCount * (BlockVertexNum - 1) + 1;
@@ -148,23 +148,23 @@ namespace lve {
 		std::atomic<int> nextRow{ 0 };
 		uint32_t threadCount = std::thread::hardware_concurrency();
 		if (threadCount == 0)threadCount = 4;//失败后为4
-		threadCount = glm::min(threadCount,static_cast<uint32_t>(mapVertexCount));//避免创建空闲的线程
+		threadCount = glm::min(threadCount, static_cast<uint32_t>(mapVertexCount));//避免创建空闲的线程
 		std::vector<std::thread> workers;
 		workers.reserve(threadCount);
 		for (unsigned int threadIndex = 0;threadIndex < threadCount;threadIndex++) {
-			workers.emplace_back([this,&nextRow,mapVertexCount,mapOrigin,step]() {
-					while (true) {
-						int globalY =nextRow.fetch_add(1,std::memory_order_relaxed);
-						if (globalY >= mapVertexCount)break;
-						const float worldY =mapOrigin + globalY * step;
-						for (int globalX = 0;globalX < mapVertexCount;globalX++) {
-							const float worldX =mapOrigin + globalX * step;
-							const size_t vertexIndex =static_cast<size_t>(globalY) *mapVertexCount +globalX;
-							const float height = getHeight(worldX, worldY, true);
-							heightData[vertexIndex] = height;
-							vertices[vertexIndex] = {glm::vec3(worldX,worldY,height),glm::vec3(1.0f),WorldUp,0.0f};
-						}
+			workers.emplace_back([this, &nextRow, mapVertexCount, mapOrigin, step]() {
+				while (true) {
+					int globalY = nextRow.fetch_add(1, std::memory_order_relaxed);
+					if (globalY >= mapVertexCount)break;
+					const float worldY = mapOrigin + globalY * step;
+					for (int globalX = 0;globalX < mapVertexCount;globalX++) {
+						const float worldX = mapOrigin + globalX * step;
+						const size_t vertexIndex = static_cast<size_t>(globalY) * mapVertexCount + globalX;
+						const float height = getHeight(worldX, worldY, true);
+						heightData[vertexIndex] = height;
+						vertices[vertexIndex] = { glm::vec3(worldX,worldY,height),glm::vec3(1.0f),WorldUp,0.0f };
 					}
+				}
 				});
 		}
 		//等待线程完毕
@@ -211,7 +211,7 @@ namespace lve {
 						const int globalX = chunkX * (BlockVertexNum - 1) + j;
 						const int globalY = chunkY * (BlockVertexNum - 1) + i;
 						const uint32_t nowPoint = static_cast<uint32_t>(globalY * mapVertexCount + globalX);
-						const size_t offset =(static_cast<size_t>(globalY) * (mapVertexCount - 1) +static_cast<size_t>(globalX)) * 6;
+						const size_t offset = (static_cast<size_t>(globalY) * (mapVertexCount - 1) + static_cast<size_t>(globalX)) * 6;
 						indices[offset] = nowPoint;
 						indices[offset + 1] = nowPoint + 1;
 						indices[offset + 2] = nowPoint + mapVertexCount;
@@ -244,7 +244,7 @@ namespace lve {
 				while (true) {
 					const int chunkCount = 2 * BlockNum - 1;
 					const int mapVertexCountw = chunkCount * (BlockVertexNum - 1) + 1;
-					const int gridY =nextRow.fetch_add(1,std::memory_order_relaxed);
+					const int gridY = nextRow.fetch_add(1, std::memory_order_relaxed);
 
 					if (gridY >= mapVertexCountw - 1) {
 						break;
@@ -254,11 +254,11 @@ namespace lve {
 						gridX < mapVertexCountw - 1;
 						gridX++) {
 
-						const glm::vec2 gridPosition{static_cast<float>(gridX),static_cast<float>(gridY)};
+						const glm::vec2 gridPosition{ static_cast<float>(gridX),static_cast<float>(gridY) };
 
 						const uint32_t index = getVertexIndex(gridPosition);
 
-						vertices[index].normal =calculateNormalNew(gridPosition);
+						vertices[index].normal = calculateNormalNew(gridPosition);
 					}
 				}
 				});
@@ -575,12 +575,12 @@ namespace lve {
 	void LveTerrain::updateHeightFlow(std::vector<int32_t>& heightUint, std::vector<uint32_t>& flowUint, float SCALE) {
 		//更新流量
 		const uint32_t maxFlow =
-		flowUint.empty() ? 0 : *std::max_element(flowUint.begin(), flowUint.end());
-		const float maxValue =std::log1p(static_cast<float>(maxFlow));
+			flowUint.empty() ? 0 : *std::max_element(flowUint.begin(), flowUint.end());
+		const float maxValue = std::log1p(static_cast<float>(maxFlow));
 		for (size_t i = 0;i < flowUint.size();i++) {
 
-			const float flow =std::log1p(static_cast<float>(flowUint[i]));
-			vertices[i].flow =maxValue > 0.0f? flow / maxValue: 0.0f;
+			const float flow = std::log1p(static_cast<float>(flowUint[i]));
+			vertices[i].flow = maxValue > 0.0f ? flow / maxValue : 0.0f;
 		}
 
 
@@ -588,6 +588,479 @@ namespace lve {
 		for (int i = 0; i < vertices.size(); i++) {
 			vertices[i].pos.z = heightUint[i] / SCALE;
 			heightData[i] = static_cast<float>(heightUint[i]) / SCALE;
+		}
+	}
+	void LveTerrain::initArea(int seed) {
+		initNoise(seed);//初始化噪声
+
+	}
+	void LveTerrain::processAreaInTime(glm::ivec2 playerBlockPos,LveCompute& compute,LveDevice &device,float HEIGHT_FIXED_SCALE) {
+		//先生成一次顶点
+		bool generatedNewBlock = false;
+		for (int i = 0;i < 5;i++) {
+			for (int j = 0;j < 5;j++) {
+				
+				if (!hasBlock(playerBlockPos.x - 2 + i, playerBlockPos.y - 2 + j)) {
+					processOneBlockVertices(playerBlockPos.x - 2 + i, playerBlockPos.y - 2 + j);//如果这个区块没的话就生成
+					generatedNewBlock = true;
+				}
+			
+			}
+		}
+		if (!generatedNewBlock) {
+			return;
+		}
+		//进行侵蚀模拟
+		//先拼一个大的5x5区块高度图[由于顶点重复去掉所以算的麻烦点]
+		const int erosionBlockCount = 5;
+		const int erosionWidth = erosionBlockCount * (BlockVertexNum - 1) + 1;
+		std::vector<int32_t> erosionHeight(static_cast<size_t>(erosionWidth) * erosionWidth);
+		std::vector<uint32_t> erosionFlow(static_cast<size_t>(erosionWidth) * erosionWidth,0);
+		for (int blockOffsetY = -2; blockOffsetY <= 2; blockOffsetY++) {
+			for (int blockOffsetX = -2; blockOffsetX <= 2; blockOffsetX++) {
+				const int blockX = playerBlockPos.x + blockOffsetX;
+				const int blockY = playerBlockPos.y + blockOffsetY;
+
+				const int64_t key = getBlockKey(blockX, blockY);
+				TerrainBlock& block = blocks.at(key);
+
+				const int areaBlockX = blockOffsetX + 2;
+				const int areaBlockY = blockOffsetY + 2;
+
+				for (int localY = 0; localY < BlockVertexNum; localY++) {
+					for (int localX = 0; localX < BlockVertexNum; localX++) {
+						const int areaX =
+							areaBlockX * (BlockVertexNum - 1) + localX;
+
+						const int areaY =
+							areaBlockY * (BlockVertexNum - 1) + localY;
+
+						const size_t areaIndex =
+							static_cast<size_t>(areaY) * erosionWidth + areaX;
+
+						const size_t blockIndex =
+							static_cast<size_t>(localY) *
+							BlockVertexNum + localX;
+
+						erosionHeight[areaIndex] =
+							static_cast<int32_t>(
+								block.heightData[blockIndex] *
+								HEIGHT_FIXED_SCALE
+								);
+
+					}
+				}
+			}
+		}
+		//侵蚀模拟
+		const VkDeviceSize computeBufferSize =
+			sizeof(int32_t) * erosionHeight.size();
+		const int haloWidth = BlockVertexNum - 1;
+
+		const int spawnMin = haloWidth + 1;
+		const int spawnMax = erosionWidth - haloWidth - 2;
+		compute.runErosionSync(
+			device,
+			0,
+			erosionWidth,
+			spawnMin,
+			spawnMax,
+			erosionHeight,
+			erosionFlow,
+			computeBufferSize
+		);
+
+		//写回区块
+		const uint32_t maxFlow =
+			erosionFlow.empty()
+			? 0
+			: *std::max_element(
+				erosionFlow.begin(),
+				erosionFlow.end()
+			);
+
+		const float maxFlowValue =
+			std::log1p(static_cast<float>(maxFlow));
+
+		for (int blockOffsetY = -1; blockOffsetY <= 1; blockOffsetY++) {
+			for (int blockOffsetX = -1; blockOffsetX <= 1; blockOffsetX++) {
+				const int blockX =
+					playerBlockPos.x + blockOffsetX;
+
+				const int blockY =
+					playerBlockPos.y + blockOffsetY;
+
+				TerrainBlock& block =
+					blocks.at(getBlockKey(blockX, blockY));
+				if (block.eroded) {
+					continue;
+				}
+				const int areaBlockX = blockOffsetX + 2;
+				const int areaBlockY = blockOffsetY + 2;
+
+				for (int localY = 0; localY < BlockVertexNum; localY++) {
+					for (int localX = 0; localX < BlockVertexNum; localX++) {
+						const int areaX =
+							areaBlockX * (BlockVertexNum - 1) +
+							localX;
+
+						const int areaY =
+							areaBlockY * (BlockVertexNum - 1) +
+							localY;
+
+						const size_t areaIndex =
+							static_cast<size_t>(areaY) *
+							erosionWidth + areaX;
+
+						const size_t blockIndex =
+							static_cast<size_t>(localY) *
+							BlockVertexNum + localX;
+
+						const float height =
+							static_cast<float>(
+								erosionHeight[areaIndex]
+								) / HEIGHT_FIXED_SCALE;
+
+						block.heightData[blockIndex] = height;
+						block.vertices[blockIndex].pos.z = height;
+
+						const float flow =
+							std::log1p(
+								static_cast<float>(
+									erosionFlow[areaIndex]
+									)
+							);
+
+						block.flowData[blockIndex] =
+							erosionFlow[areaIndex];
+
+						block.vertices[blockIndex].flow =
+							maxFlowValue > 0.0f
+							? flow / maxFlowValue
+							: 0.0f;
+					}
+				}
+
+				block.eroded = true;
+			}
+		}
+
+
+
+		//删除没用的区块
+		for (auto it = blocks.begin(); it != blocks.end();) {
+			const TerrainBlock& block = it->second;
+
+			const bool outside =
+				std::abs(block.blockX - playerBlockPos.x) > 2 ||
+				std::abs(block.blockY - playerBlockPos.y) > 2;
+
+			if (outside) {
+				it = blocks.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
+		//重算法线
+		for (int offsetY = -1;
+			offsetY <= 1;
+			offsetY++) {
+
+			for (int offsetX = -1;
+				offsetX <= 1;
+				offsetX++) {
+
+				const int blockX =
+					playerBlockPos.x + offsetX;
+
+				const int blockY =
+					playerBlockPos.y + offsetY;
+
+				calculateBlockNormals(
+					blockX,
+					blockY
+				);
+			}
+		}
+		//重新提交mesh
+		rebuildCombinedMesh(playerBlockPos);
+
+		
+	}
+	void LveTerrain::rebuildCombinedMesh(glm::ivec2 playerBlockPos) {
+		vertices.clear();
+		indices.clear();
+
+		for (const auto& [key, block] : blocks) {
+			const bool insideRenderArea =
+				std::abs(block.blockX - playerBlockPos.x) <= 1 &&
+				std::abs(block.blockY - playerBlockPos.y) <= 1;
+
+			//外围一圈只用于侵蚀计算，不参与绘制
+			if (!insideRenderArea) {
+				continue;
+			}
+
+			const uint32_t baseVertex =
+				static_cast<uint32_t>(vertices.size());
+
+			vertices.insert(
+				vertices.end(),
+				block.vertices.begin(),
+				block.vertices.end()
+			);
+
+			indices.reserve(
+				indices.size() + block.indices.size()
+			);
+
+			for (uint32_t localIndex : block.indices) {
+				indices.push_back(baseVertex + localIndex);
+			}
+		}
+	}
+	void LveTerrain::processOneBlockVertices(int blockX, int blockY) {
+		const int64_t key = getBlockKey(blockX, blockY);
+
+		//已经存在就不重复生成
+		if (blocks.contains(key)) {
+			return;
+		}
+
+		TerrainBlock block{};
+		block.blockX = blockX;
+		block.blockY = blockY;
+
+		const float step = BlockDistance / static_cast<float>(BlockVertexNum - 1);
+		const float originX = blockX * BlockDistance;
+		const float originY = blockY * BlockDistance;
+
+		const size_t vertexCount =
+			static_cast<size_t>(BlockVertexNum) * BlockVertexNum;
+
+		block.vertices.resize(vertexCount);
+		block.heightData.resize(vertexCount);
+		block.flowData.resize(vertexCount, 0);
+		//生成该区块的顶点
+		for (int y = 0; y < BlockVertexNum; y++) {
+			for (int x = 0; x < BlockVertexNum; x++) {
+				const float worldX = originX + x * step;
+				const float worldY = originY + y * step;
+				const float height = getHeight(worldX, worldY, true);
+			
+				const size_t vertexIndex =
+					static_cast<size_t>(y) * BlockVertexNum + x;
+				block.heightData[vertexIndex] = height;
+				block.vertices[vertexIndex] = {
+					glm::vec3(worldX, worldY, height),
+					glm::vec3(1.0f),
+					WorldUp,
+					0.0f
+				};
+			}
+		}
+
+		const size_t cellCount =
+			static_cast<size_t>(BlockVertexNum - 1) *
+			(BlockVertexNum - 1);
+
+		block.indices.resize(cellCount * 6);
+
+		//生成该区块的局部索引
+		for (int y = 0; y < BlockVertexNum - 1; y++) {
+			for (int x = 0; x < BlockVertexNum - 1; x++) {
+				const uint32_t nowPoint =
+					static_cast<uint32_t>(y * BlockVertexNum + x);
+
+				const size_t offset =
+					(static_cast<size_t>(y) *
+						(BlockVertexNum - 1) + x) * 6;
+
+				block.indices[offset] = nowPoint;
+				block.indices[offset + 1] = nowPoint + 1;
+				block.indices[offset + 2] = nowPoint + BlockVertexNum;
+
+				block.indices[offset + 3] = nowPoint + 1;
+				block.indices[offset + 4] = nowPoint + BlockVertexNum + 1;
+				block.indices[offset + 5] = nowPoint + BlockVertexNum;
+			}
+		}
+
+		blocks.emplace(key, std::move(block));
+	}
+	int64_t LveTerrain::getBlockKey(int blockX, int blockY)const {
+		const uint64_t x =
+			static_cast<uint32_t>(blockX);
+
+		const uint64_t y =
+			static_cast<uint32_t>(blockY);
+
+		return static_cast<int64_t>(
+			(x << 32) | y
+			);
+	}
+	void LveTerrain::removeOneBlock(int blockX, int blockY) {
+		const int64_t key = getBlockKey(blockX, blockY);
+		blocks.erase(key);
+	}
+	bool LveTerrain::hasBlock(int blockX, int blockY){
+		const int64_t key = getBlockKey(blockX, blockY);
+		return blocks.find(key) != blocks.end();
+	}
+	float LveTerrain::getBlockHeight(
+		int blockX,
+		int blockY,
+		int localX,
+		int localY
+	) const {
+		const int blockStep =
+			BlockVertexNum - 1;
+
+		//超出左边，进入左侧区块
+		while (localX < 0) {
+			blockX--;
+			localX += blockStep;
+		}
+
+		//超出右边，进入右侧区块
+		while (localX >= BlockVertexNum) {
+			blockX++;
+			localX -= blockStep;
+		}
+
+		//超出下边，进入下侧区块
+		while (localY < 0) {
+			blockY--;
+			localY += blockStep;
+		}
+
+		//超出上边，进入上侧区块
+		while (localY >= BlockVertexNum) {
+			blockY++;
+			localY -= blockStep;
+		}
+
+		const auto blockIt =
+			blocks.find(getBlockKey(blockX, blockY));
+
+		//正常情况下中心3×3周围有一圈缓冲区，不会缺失
+		if (blockIt == blocks.end()) {
+			const float step =
+				BlockDistance /
+				static_cast<float>(BlockVertexNum - 1);
+
+			const float worldX =
+				blockX * BlockDistance +
+				localX * step;
+
+			const float worldY =
+				blockY * BlockDistance +
+				localY * step;
+
+			//函数是const时不能直接调用非const的getHeight
+			//缺区块时暂时返回0，或者把getHeight也改成const
+			return 0.0f;
+		}
+
+		const TerrainBlock& block =
+			blockIt->second;
+
+		const size_t index =
+			static_cast<size_t>(localY) *
+			BlockVertexNum +
+			static_cast<size_t>(localX);
+
+		return block.heightData[index];
+	}
+	void LveTerrain::calculateBlockNormals(
+		int blockX,
+		int blockY
+	) {
+		const int64_t key =
+			getBlockKey(blockX, blockY);
+
+		auto blockIt = blocks.find(key);
+
+		if (blockIt == blocks.end()) {
+			return;
+		}
+
+		TerrainBlock& block =
+			blockIt->second;
+
+		const float sampleDistance =
+			BlockDistance /
+			static_cast<float>(BlockVertexNum - 1);
+
+		for (int localY = 0;
+			localY < BlockVertexNum;
+			localY++) {
+
+			for (int localX = 0;
+				localX < BlockVertexNum;
+				localX++) {
+
+				const float heightLeft =
+					getBlockHeight(
+						blockX,
+						blockY,
+						localX - 1,
+						localY
+					);
+
+				const float heightRight =
+					getBlockHeight(
+						blockX,
+						blockY,
+						localX + 1,
+						localY
+					);
+
+				const float heightDown =
+					getBlockHeight(
+						blockX,
+						blockY,
+						localX,
+						localY - 1
+					);
+
+				const float heightUp =
+					getBlockHeight(
+						blockX,
+						blockY,
+						localX,
+						localY + 1
+					);
+
+				const glm::vec3 tangentX{
+					sampleDistance * 2.0f,
+					0.0f,
+					heightRight - heightLeft
+				};
+
+				const glm::vec3 tangentY{
+					0.0f,
+					sampleDistance * 2.0f,
+					heightUp - heightDown
+				};
+
+				const glm::vec3 normal =
+					glm::normalize(
+						glm::cross(
+							tangentX,
+							tangentY
+						)
+					);
+
+				const size_t vertexIndex =
+					static_cast<size_t>(localY) *
+					BlockVertexNum +
+					static_cast<size_t>(localX);
+
+				block.vertices[vertexIndex].normal =
+					normal;
+			}
 		}
 	}
 }

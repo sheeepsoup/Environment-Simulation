@@ -240,20 +240,50 @@ namespace lve {
     }
 
     // 记录计算命令
-    void LveCompute::recordComputeCommands(VkCommandBuffer cmdBuffer, uint32_t frameIndex, int width) {
-        vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
-        vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSets[frameIndex], 0, nullptr);
-        const uint32_t totalDroplets = EROSON_EXTENT;
+    void LveCompute::recordComputeCommands(
+        VkCommandBuffer commandBuffer,
+        uint32_t bufferIndex,
+        int width,
+        int spawnMin,
+        int spawnMax
+    ) {
+        vkCmdBindPipeline(
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_COMPUTE,
+            computePipeline
+        );
+
+        vkCmdBindDescriptorSets(
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_COMPUTE,
+            pipelineLayout,
+            0,
+            1,
+            &descriptorSets[bufferIndex],
+            0,
+            nullptr
+        );
+
         PushConstantData pushData{};
         pushData.width = width;
-        pushData.waterDorpNum = totalDroplets;
-        vkCmdPushConstants(cmdBuffer, pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstantData), &pushData);
+        pushData.waterDorpNum = EROSON_EXTENT;
+        pushData.spawnMin = spawnMin;
+        pushData.spawnMax = spawnMax;
 
-  
-        const uint32_t groupSize = 64;  // 和着色器里的 local_size_x 保持一致
-        uint32_t groupCount = (totalDroplets + groupSize - 1) / groupSize; // 结果 = 15625
+        vkCmdPushConstants(
+            commandBuffer,
+            pipelineLayout,
+            VK_SHADER_STAGE_COMPUTE_BIT,
+            0,
+            sizeof(PushConstantData),
+            &pushData
+        );
 
-        vkCmdDispatch(cmdBuffer, groupCount, 1, 1);
+        const uint32_t groupSize = 64;
+        const uint32_t groupCount =
+            (EROSON_EXTENT + groupSize - 1) / groupSize;
+
+        vkCmdDispatch(commandBuffer, groupCount, 1, 1);
     }
 
     // 清理
@@ -300,10 +330,23 @@ namespace lve {
         flowBuffersMapped.clear();
     }
 
-    void LveCompute::runErosionSync(LveDevice& device, uint32_t bufferIndex, int mapVertexCount, std::vector<int32_t>& heightData,
-        std::vector<uint32_t>& flowData, VkDeviceSize bufferSize) {
+    void LveCompute::runErosionSync(
+        LveDevice& device,
+        uint32_t bufferIndex,
+        int width,
+        int spawnMin,
+        int spawnMax,
+        std::vector<int32_t>& heightData,
+        std::vector<uint32_t>& flowData,
+        VkDeviceSize dataSize
+    ) {
+        std::memset(
+            getFlowMappedData(bufferIndex),
+            0,
+            static_cast<size_t>(dataSize)
+        );
         //计算地形
-        updateStorageBuffer(bufferIndex, heightData.data(), bufferSize);
+        updateStorageBuffer(bufferIndex, heightData.data(), dataSize);
         //提交一次计算
         VkCommandBuffer computeCmdBuf;
         VkCommandBufferAllocateInfo allocInfo{};
@@ -317,7 +360,13 @@ namespace lve {
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         vkBeginCommandBuffer(computeCmdBuf, &beginInfo);
-        recordComputeCommands(computeCmdBuf, bufferIndex, mapVertexCount); // 只跑一次，用第0帧的 descriptor
+        recordComputeCommands(
+            computeCmdBuf,
+            bufferIndex,
+            width,
+            spawnMin,
+            spawnMax
+        ); // 只跑一次，用第0帧的 descriptor
         vkEndCommandBuffer(computeCmdBuf);
 
         VkSubmitInfo submitInfo{};
@@ -335,7 +384,7 @@ namespace lve {
         vkDestroyFence(device.getDevice(), computeFence, nullptr);
         vkFreeCommandBuffers(device.getDevice(), device.getCommandPool(), 1, &computeCmdBuf);
         //计算完毕拷回来
-        memcpy(heightData.data(), getMappedData(bufferIndex), bufferSize);
+        memcpy(heightData.data(), getMappedData(bufferIndex), dataSize);
         memcpy(flowData.data(),getFlowMappedData(bufferIndex), sizeof(uint32_t) * flowData.size());
        
     };

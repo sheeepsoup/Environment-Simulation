@@ -22,7 +22,13 @@ namespace lve {
         void updateStorageBuffer(uint32_t frameIndex, void* data, VkDeviceSize size);
 
         // 记录计算命令
-        void recordComputeCommands(VkCommandBuffer cmdBuffer, uint32_t frameIndex, int width);
+        void recordComputeCommands(
+            VkCommandBuffer commandBuffer,
+            uint32_t bufferIndex,
+            int width,
+            int spawnMin,
+            int spawnMax
+        );
 
         // 清理
         void clean();
@@ -34,15 +40,25 @@ namespace lve {
         //上传的内容 上传地图大小
         struct PushConstantData {
             int width;
-            int waterDorpNum;//雨滴数量
+            int waterDorpNum;
+            int spawnMin;
+            int spawnMax;
         };
         void* getFlowMappedData(uint32_t frameIndex) const {
             return flowBuffersMapped[frameIndex];
         }
 
 
-        void runErosionSync(LveDevice& device, uint32_t bufferIndex, int mapVertexCount, std::vector<int32_t>& heightData,
-            std::vector<uint32_t>& flowData, VkDeviceSize bufferSize);
+        void runErosionSync(
+            LveDevice& device,
+            uint32_t bufferIndex,
+            int width,
+            int spawnMin,
+            int spawnMax,
+            std::vector<int32_t>& heightData,
+            std::vector<uint32_t>& flowData,
+            VkDeviceSize dataSize
+        );
     private:
         LveDevice& device;
         std::string computeShaderPath;

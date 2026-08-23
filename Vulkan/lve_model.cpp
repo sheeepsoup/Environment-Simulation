@@ -12,7 +12,7 @@ namespace lve {
 
 	}
 
-	void LveModel::createVertexBufferWithStaging(LveDevice lveDevice, std::vector<Vertex>& vertices) {
+	void LveModel::createVertexBufferWithStaging(LveDevice &lveDevice, const std::vector<Vertex>& vertices) {
 		//创建一个临时缓冲区,用于将数据从CPU传输到GPU
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 		//创建临时缓冲区
@@ -36,10 +36,23 @@ namespace lve {
 		);
 
 		lveDevice.copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+		vkDestroyBuffer(
+			lveDevice.getDevice(),
+			stagingBuffer,
+			nullptr
+		);
 
+		vkFreeMemory(
+			lveDevice.getDevice(),
+			stagingBufferMemory,
+			nullptr
+		);
+
+		stagingBuffer = VK_NULL_HANDLE;
+		stagingBufferMemory = VK_NULL_HANDLE;
 	}
 	void LveModel::fillInVertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize bufferSize,VkDeviceMemory bufferMemory
-		, std::vector<Vertex>& vertices) {
+		, const std::vector<Vertex>& vertices) {
 		vkMapMemory(device, bufferMemory, 0, bufferSize, 0, &data);//映射内存
 		memcpy(data, vertices.data(), (size_t)bufferSize);//拷贝数据到映射内存
 		vkUnmapMemory(device, bufferMemory);//解除映射内存
@@ -62,7 +75,7 @@ namespace lve {
 		vkFreeMemory(device, indexBufferMemory, nullptr);
 	}
 
-	void LveModel::createIndexBufferWithStaging(LveDevice& lveDevice,std::vector<uint32_t> &indices) {
+	void LveModel::createIndexBufferWithStaging(LveDevice& lveDevice, const std::vector<uint32_t> &indices) {
 		VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
 		VkBuffer stagingBuffer;
@@ -92,6 +105,66 @@ namespace lve {
 		vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 	}
 
+	void LveModel::destroyMeshBuffers(
+		VkDevice device
+	) {
+		if (vertexBuffer != VK_NULL_HANDLE) {
+			vkDestroyBuffer(
+				device,
+				vertexBuffer,
+				nullptr
+			);
 
+			vertexBuffer = VK_NULL_HANDLE;
+		}
 
+		if (vertexBufferMemory != VK_NULL_HANDLE) {
+			vkFreeMemory(
+				device,
+				vertexBufferMemory,
+				nullptr
+			);
+
+			vertexBufferMemory = VK_NULL_HANDLE;
+		}
+
+		if (indexBuffer != VK_NULL_HANDLE) {
+			vkDestroyBuffer(
+				device,
+				indexBuffer,
+				nullptr
+			);
+
+			indexBuffer = VK_NULL_HANDLE;
+		}
+
+		if (indexBufferMemory != VK_NULL_HANDLE) {
+			vkFreeMemory(
+				device,
+				indexBufferMemory,
+				nullptr
+			);
+
+			indexBufferMemory = VK_NULL_HANDLE;
+		}
+	}
+	void LveModel::replaceMesh(
+		LveDevice& device,
+		const std::vector<Vertex>& vertices,
+		const std::vector<uint32_t>& indices
+	) {
+		destroyMeshBuffers(
+			device.getDevice()
+		);
+
+		createVertexBufferWithStaging(
+			device,
+			vertices
+		);
+
+		createIndexBufferWithStaging(
+			device,
+			indices
+		);
+	}
 }
