@@ -1,5 +1,17 @@
 # 🌄 Vulkan 环境渲染模拟器
 
+
+About this branch (feature/frame-by-frame-terrain-update):
+
+This branch focuses on implementing real-time infinite terrain updates. Since generating a single terrain chunk currently takes about 2 seconds, significant optimization efforts will be made in this branch to improve performance.
+
+The code in this branch will undergo major changes compared to main (which is designed for fixed-size terrain chunks). Once the implementation is complete and stable, this branch will be merged back into main.
+
+The purpose of creating this separate branch is to isolate experimental changes — if the real-time approach proves too difficult to achieve, I can easily discard this branch and return to the stable main branch.
+
+All updates related to this feature will be made in this branch until it is merged back into main.
+
+
 <p align="center">
   <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="地形渲染全景" width="100%"/>
 </p>
@@ -11,6 +23,7 @@
 ---
 
 ## <a id="english"></a>🇬🇧 English
+
 
 ## 📖 Introduction
 
@@ -83,6 +96,18 @@ Currently completed: terrain generation and hydraulic erosion simulation. More e
 ## <a id="chinese"></a>🇨🇳 中文
 
 # 🌄 Vulkan 环境渲染模拟器
+
+
+关于本分支（feature/frame-by-frame-terrain-update）：
+
+本分支专注于实现实时更新的无限地形。当前生成单个地形区块大约需要 2 秒，因此将在此分支中尽可能进行性能优化。
+
+与 main 分支（主要服务于固定区块）相比，本分支的代码将发生较大改动。待实现稳定后，本分支将合并回 main。
+
+创建独立分支的目的是隔离实验性改动——如果实时方案难以实现，可以随时放弃本分支，回到稳定的 main 分支继续开发。
+
+在合并回 main 之前，该功能的所有更新都将在此分支进行。
+
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="地形渲染全景" width="100%"/>
