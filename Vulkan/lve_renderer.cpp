@@ -58,7 +58,8 @@ namespace lve {
 	}
 	void LveRenderer::run(VkDevice device, LveSwapChain& swapChain, VkQueue graphicsQueue, VkQueue presentQueue, uint32_t& currentFrame,
 		VkRenderPass renderPass, LveModel& model,const std::vector<VkDescriptorSet> descriptorSets, VkPipelineLayout pipelineLayout,LveUniform uniform,
-		const glm::mat4 modelMatirx,const glm::mat4 view,const glm::mat4 proj,LveCompute& compute,glm::vec3 cameraPos, std::vector<uint32_t>& indices) {
+		const glm::mat4 modelMatirx,const glm::mat4 view,const glm::mat4 proj,LveCompute& compute,glm::vec3 cameraPos, std::vector<uint32_t>& indices,
+		LveTerrain& terrain, float renderDistance) {
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);//等待栅栏,直到渲染完成
 		vkAcquireNextImageKHR(device, swapChain.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);//获取下一张交换链图片的索引,并将imageAvailableSemaphore信号量设置为在图像可用时发出信号
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);//重置栅栏,以便下一次使用
@@ -67,7 +68,8 @@ namespace lve {
 	
 		vkResetCommandBuffer(commandBuffers[currentFrame], 0);//重置命令缓冲区,以便重新记录命令缓冲区
 		recordCommandBuffer(commandBuffers[currentFrame], imageIndex,
-			renderPass,swapChain.getSwapChainFrameBuffer(imageIndex),swapChain.getSwapChainExtent(),model,pipelineLayout,currentFrame,descriptorSets,compute,indices);//记录命令缓冲区
+			renderPass,swapChain.getSwapChainFrameBuffer(imageIndex),swapChain.getSwapChainExtent(),model,pipelineLayout,currentFrame,descriptorSets,compute,
+			indices,terrain,renderDistance,cameraPos);//记录命令缓冲区
 
 		//提交命令缓冲区
 		VkSubmitInfo submitInfo{};//提交信息
@@ -108,7 +110,8 @@ namespace lve {
 
 	void LveRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,VkRenderPass renderPass,
 		VkFramebuffer framebuffer,VkExtent2D extent,LveModel& model, VkPipelineLayout pipelineLayout,uint32_t currentFrame,
-		const std::vector<VkDescriptorSet> descriptorSets, LveCompute& compute,std::vector<uint32_t> &indices) {
+		const std::vector<VkDescriptorSet> descriptorSets, LveCompute& compute,std::vector<uint32_t> &indices,LveTerrain &terrain,
+		float renderDistance,glm::vec3 cameraPos) {
 		{
 			VkCommandBufferBeginInfo beginInfo{};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;//~
@@ -164,7 +167,7 @@ namespace lve {
 			model.bindIndexBuffer(commandBuffer);//绑定索引缓冲
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);//绑定描述符集
 			//绘制三角形
-			model.draw_index_mode(commandBuffer, indices);
+			terrain.drawVisibleChunks(commandBuffer, cameraPos, renderDistance);
 
 			//结束渲染通道
 			vkCmdEndRenderPass(commandBuffer);

@@ -68,9 +68,7 @@ namespace lve {
 		void createIndexBufferWithStaging(LveDevice& lveDevice, std::vector<uint32_t>& indices);//创建索引缓冲区
 		void bindVertex(VkCommandBuffer commandBuffer);//绑定vertex
 		void bindIndexBuffer(VkCommandBuffer commandBuffer);//绑定索引缓冲区
-		void draw_index_mode(VkCommandBuffer commandBuffer, std::vector<uint32_t>& indices);//索引模式的绘制
-		void draw(VkCommandBuffer commandBuffer, std::vector<Vertex>& vertices);//普通绘制
-
+	
 	
 
 	private:

@@ -8,6 +8,7 @@
 #include"lve_uniform.h"
 #include"lve_camera.h"
 #include"lve_compute.h"
+#include"lve_terrain.h"
 namespace lve {
 	class LveRenderer {
 	public:
@@ -15,7 +16,8 @@ namespace lve {
 		void createSignalSemaphore(VkDevice device, uint32_t swapChainImageCount);
 		void run(VkDevice device, LveSwapChain& swapChain, VkQueue graphicsQueue, VkQueue presentQueue, uint32_t& currentFrame,
 			VkRenderPass renderPass, LveModel& model, const std::vector<VkDescriptorSet> descriptorSets, VkPipelineLayout pipelineLayout, LveUniform uniform,
-			const glm::mat4 modelMatirx, const glm::mat4 view, const glm::mat4 proj, LveCompute& compute, glm::vec3 cameraPos, std::vector<uint32_t>& indices);
+			const glm::mat4 modelMatirx, const glm::mat4 view, const glm::mat4 proj, LveCompute& compute, glm::vec3 cameraPos, std::vector<uint32_t>& indices,
+			LveTerrain& terrain,float renderDistance);
 		uint32_t getImageIndex() { return imageIndex; };
 		uint32_t getMaxFramesInFlight() { return MAX_FRAMES_IN_FLIGHT; };
 		void clean(VkDevice device);
@@ -32,7 +34,8 @@ namespace lve {
 		//命令缓冲区的记录
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VkRenderPass renderPass,
 			VkFramebuffer framebuffer, VkExtent2D extent, LveModel& model, VkPipelineLayout pipelineLayout, uint32_t currentFrame,
-			const std::vector<VkDescriptorSet> descriptorSets, LveCompute& compute, std::vector<uint32_t>& indices);
+			const std::vector<VkDescriptorSet> descriptorSets, LveCompute& compute, std::vector<uint32_t>& indices, LveTerrain& terrain,
+			float renderDistance, glm::vec3 cameraPos);
 	};
 
 }

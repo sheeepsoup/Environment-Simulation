@@ -1,4 +1,4 @@
-#version 450
+﻿#version 450
 layout(local_size_x = 64) in;
 layout(binding = 0) buffer HeightBuffer {
    int heights_int[];
@@ -11,12 +11,12 @@ layout(push_constant) uniform PushConstants {
     int waterDorpNum;
 } pc;
 
-const int   WATER_MAX_STEP = 500;
-const float MIN_WATER = 0.01;
-const float MIN_SPEED = 0.01;
-const float capacityFactor = 4.0;
-const float erosionRate = 0.1;
-const float depositionRate = 0.03;
+const int   WATER_MAX_STEP = 500;//雨滴最大步数
+const float MIN_WATER = 0.01;//最小水量
+const float MIN_SPEED = 0.01;//最小速度
+const float capacityFactor = 4.0;//携沙最大力度
+const float erosionRate = 0.1;//侵蚀力度
+const float depositionRate = 0.03;//沉积力度
 const float inertia = 0.6;
 const float gravity = 4.0;
 const float SCALE = 10000.0;

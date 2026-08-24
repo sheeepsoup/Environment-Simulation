@@ -25,6 +25,7 @@
 // 参数控制
 const int seed = 114514;//地图种子
 const float HEIGHT_FIXED_SCALE = 10000.0f;//这个用于int->float还原,不用改
+const float cameraMaxSeeDistance = 450.0f;
 //----------------------------------------------------------------------------------------
 //本地无限地形生成开关
 bool unlimitedArea = false;
@@ -171,7 +172,7 @@ int main() {
 	}
 	compute.runErosionSync(device, 0, terrain.getMapVertexNum(), heightUint, flowUint, computeBufferSize);
 	terrain.updateHeightFlow(heightUint, flowUint, HEIGHT_FIXED_SCALE);
-	
+	terrain.updateChunkDate(heightUint, HEIGHT_FIXED_SCALE);
 
 	
 	auto erosionEnd = Clock::now();
@@ -248,7 +249,7 @@ int main() {
 		glm::radians(45.0f),
 		swapChain.getSwapChainExtent().width / static_cast<float>(swapChain.getSwapChainExtent().height),
 		0.1f,//近裁截面
-		300.0f);//远裁截面
+		cameraMaxSeeDistance);//远裁截面
 
 
 	SDL_Event event;
@@ -309,7 +310,7 @@ int main() {
 		
 		renderer.run(device.getDevice(), swapChain, device.getGraphicsQueue(), device.getPresentQueue(),
 			currentFrame, renderPass.getRenderPass(),model,uniform.getDescriptorSets(),pipeLine.getPipelineLayout(),
-			uniform, modelMatrix,camera.getView(),camera.getProjection(),compute,camera.getPos(),terrain.getIndices());
+			uniform, modelMatrix,camera.getView(),camera.getProjection(),compute,camera.getPos(),terrain.getIndices(),terrain, cameraMaxSeeDistance);
 		
 
 	}

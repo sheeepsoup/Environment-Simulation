@@ -85,12 +85,7 @@ namespace lve {
 		vkFreeMemory(lveDevice.getDevice(), stagingBufferMemory, nullptr);
 	}
 	
-	void LveModel::draw_index_mode(VkCommandBuffer commandBuffer, std::vector<uint32_t>& indices) {
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-	}
-	void LveModel::draw(VkCommandBuffer commandBuffer, std::vector<Vertex>& vertices) {
-		vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-	}
+
 
 
 

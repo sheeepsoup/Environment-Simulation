@@ -171,6 +171,7 @@ namespace lve {
 		for (auto& worker : workers)worker.join();
 		indices.resize((mapVertexCount - 1) * (mapVertexCount - 1) * 6);
 		//生成区块[0,0->初始地区]
+		uint32_t nowIndex = 0;
 		for (int x = -BlockNum + 1; x < BlockNum; x++) {//遍历2 * n - 1次[例如区块为6,x方向遍历11次]
 			for (int y = -BlockNum + 1; y < BlockNum; y++) {//x,y表示当前对应的区块
 				/*这块是单线程生成,单纯保留纪念一下
@@ -204,6 +205,7 @@ namespace lve {
 				}
 				*/
 				//填充indices
+				const uint32_t chunkFirstIndex = nowIndex;
 				const int chunkX = x + BlockNum - 1;
 				const int chunkY = y + BlockNum - 1;
 				for (int i = 0; i < BlockVertexNum - 1; i++) {
@@ -211,15 +213,18 @@ namespace lve {
 						const int globalX = chunkX * (BlockVertexNum - 1) + j;
 						const int globalY = chunkY * (BlockVertexNum - 1) + i;
 						const uint32_t nowPoint = static_cast<uint32_t>(globalY * mapVertexCount + globalX);
-						const size_t offset =(static_cast<size_t>(globalY) * (mapVertexCount - 1) +static_cast<size_t>(globalX)) * 6;
-						indices[offset] = nowPoint;
-						indices[offset + 1] = nowPoint + 1;
-						indices[offset + 2] = nowPoint + mapVertexCount;
-						indices[offset + 3] = nowPoint + 1;
-						indices[offset + 4] = nowPoint + 1 + mapVertexCount;
-						indices[offset + 5] = nowPoint + mapVertexCount;
+						indices[nowIndex] = nowPoint;
+						indices[nowIndex + 1] = nowPoint + 1;
+						indices[nowIndex + 2] = nowPoint + mapVertexCount;
+						indices[nowIndex + 3] = nowPoint + 1;
+						indices[nowIndex + 4] = nowPoint + 1 + mapVertexCount;
+						indices[nowIndex + 5] = nowPoint + mapVertexCount;
+						nowIndex += 6;
 					}
 				}
+				//生成完一个区块了
+				const uint32_t chunkIndexCount = nowIndex - chunkFirstIndex;
+				renderChunks.push_back({ chunkFirstIndex,chunkIndexCount ,glm::vec3(x * BlockDistance,y * BlockDistance,0.0f) });
 			}
 		}
 		//锈蚀模拟
@@ -588,6 +593,26 @@ namespace lve {
 		for (int i = 0; i < vertices.size(); i++) {
 			vertices[i].pos.z = heightUint[i] / SCALE;
 			heightData[i] = static_cast<float>(heightUint[i]) / SCALE;
+		}
+	}
+	void LveTerrain::updateChunkDate(std::vector<int32_t> &heightUint,float HEIGHT_FIXED_SCALE) {
+		const int chunkCount = BlockNum * 2 - 1;
+		const int chunkGridSize = BlockVertexNum - 1;
+		for (int i = 0;i < chunkCount;i++) {
+			for (int j = 0;j < chunkCount;j++) {
+				const float centerGridX = i * chunkGridSize + chunkGridSize * 0.5f;
+				const float centerGridY = j * chunkGridSize + chunkGridSize * 0.5f;
+				const uint32_t centerIndex = getVertexIndex(glm::vec2(centerGridX, centerGridY));
+				renderChunks[i * chunkCount + j].chunkCenterPoint.z =
+					(heightUint[centerIndex]) / HEIGHT_FIXED_SCALE;
+			}
+		}
+	}
+	void LveTerrain::drawVisibleChunks(VkCommandBuffer commandBuffer, const glm::vec3& cameraPosition, float renderDistance) {
+		for (const auto& chunk : getRenderChunks()) {
+			float dist = glm::length(cameraPosition - chunk.chunkCenterPoint);
+			if (dist > renderDistance + BlockDistance)continue;
+			vkCmdDrawIndexed(commandBuffer, chunk.indexCount, 1, chunk.firstIndex, 0, 0);
 		}
 	}
 }

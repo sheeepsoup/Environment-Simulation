@@ -23,6 +23,14 @@ namespace lve {
 			}
 		};
 		void updateHeightFlow(std::vector<int32_t>& heightData, std::vector<uint32_t>& flowData, float SCALE);//更新从gpu拿到的侵蚀数据
+		void updateChunkDate(std::vector<int32_t>& heightUint, float HEIGHT_FIXED_SCALE);//更新区块数据[用于侵蚀模拟完毕后重置高度]
+		void drawVisibleChunks(VkCommandBuffer commandBuffer, const glm::vec3& cameraPosition, float renderDistance);
+
+		struct TerrainRenderChunk {
+			uint32_t firstIndex;//indices中的索引
+			uint32_t indexCount;//索引数量
+			glm::vec3 chunkCenterPoint;//区块中心坐标点
+		};
 
 		uint32_t getMapVertexNum() { return mapVertexCount; };
 		std::vector<uint32_t>& getIndices() { return indices; };
@@ -30,7 +38,8 @@ namespace lve {
 		std::vector<LveModel::Vertex> &getVertices() { return vertices; };
 		const std::vector<LveModel::Vertex>& getVertices() const { return vertices; };
 		std::vector<float> &getHeightData() { return heightData; };
-
+		std::vector<TerrainRenderChunk>& getRenderChunks() { return renderChunks; };
+		float getBlockDist() { return BlockDistance; };
 		int mapVertexCount;//地图顶点大小[x/y方向]
 	private:
 		#define EROSON_EXTENT 1000000//侵蚀n次
@@ -83,7 +92,7 @@ namespace lve {
 		std::vector<float> heightData;//高度数据
 		std::vector<WaterDrop> erosion;//腐蚀
 		std::vector<uint32_t> indices;//这里indice用于索引缓冲区,数字代表第n个三角形的点,详细问gpt不好解释
-
+		std::vector<TerrainRenderChunk> renderChunks;//用于渲染的时候的区块[抛去那些迷雾外的区块]
 
 		float getHeight(float WorldX, float WorldY, bool isFirst);
 		glm::vec3 calculateNormal(float worldX, float worldY, float sampleDistance);
