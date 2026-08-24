@@ -3,13 +3,7 @@
 
 About this branch (feature/frame-by-frame-terrain-update):
 
-This branch focuses on implementing real-time infinite terrain updates. Since generating a single terrain chunk currently takes about 2 seconds, significant optimization efforts will be made in this branch to improve performance.
-
-The code in this branch will undergo major changes compared to main (which is designed for fixed-size terrain chunks). Once the implementation is complete and stable, this branch will be merged back into main.
-
-The purpose of creating this separate branch is to isolate experimental changes — if the real-time approach proves too difficult to achieve, I can easily discard this branch and return to the stable main branch.
-
-All updates related to this feature will be made in this branch until it is merged back into main.
+This branch is dedicated to performance acceleration optimizations. Since these improvements are not visually apparent, this branch is set up separately. Updates will commence after the main terrain functionality in the main branch is largely implemented.
 
 
 <p align="center">
@@ -99,14 +93,7 @@ Currently completed: terrain generation and hydraulic erosion simulation. More e
 
 
 关于本分支（feature/frame-by-frame-terrain-update）：
-
-本分支专注于实现实时更新的无限地形。当前生成单个地形区块大约需要 2 秒，因此将在此分支中尽可能进行性能优化。
-
-与 main 分支（主要服务于固定区块）相比，本分支的代码将发生较大改动。待实现稳定后，本分支将合并回 main。
-
-创建独立分支的目的是隔离实验性改动——如果实时方案难以实现，可以随时放弃本分支，回到稳定的 main 分支继续开发。
-
-在合并回 main 之前，该功能的所有更新都将在此分支进行。
+本分支专注于程序加速优化，因优化效果不易直观体现，故单独设立。待 main 分支的地形核心功能基本实现后，再启动本分支的更新工作。
 
 
 <p align="center">
