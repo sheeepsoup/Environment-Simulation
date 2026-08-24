@@ -162,7 +162,7 @@ void main(){
     //-----------------------------------------------------------------------计算雾
     float dist = length(fragCameraPos.xyz - fragWorldPosition);
     float fogValue = 1 - smoothstep(80.0f,250.0f,dist);
-    finalColor = mix(fogColor,finalColor,fogValue);
+  //  finalColor = mix(fogColor,finalColor,fogValue);
 
     outColor = vec4(finalColor, 1.0);
    //outColor = vec4(vec3(fragFlow), 1.0);

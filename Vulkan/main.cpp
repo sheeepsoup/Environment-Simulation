@@ -264,7 +264,7 @@ int main() {
 		glm::radians(45.0f),
 		swapChain.getSwapChainExtent().width / static_cast<float>(swapChain.getSwapChainExtent().height),
 		0.1f,//近裁截面
-		300.0f);//远裁截面
+		3000.0f);//远裁截面
 
 
 	SDL_Event event;
@@ -367,8 +367,7 @@ int main() {
 				terrain.getIndices()
 			);
 
-			lastPlayerBlock =
-				currentPlayerBlock;
+			lastPlayerBlock = currentPlayerBlock;
 
 		}
 

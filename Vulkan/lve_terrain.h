@@ -56,7 +56,7 @@ namespace lve {
 		float terrainHeighLimite = 6.0f;//丘陵的最大高度
 		int BlockNum = 50;//区块数量
 		int BlockVertexNum = 300;//每个区块x/y对应的顶点数,该区块含有n*n个顶点
-		float BlockDistance = 50.0;//每个区块的x/y对应的距离大小
+		float BlockDistance = 500.0;//每个区块的x/y对应的距离大小
 		uint32_t cpuThreadNum;//cpu线程数
 
 		struct TerrainBlock {

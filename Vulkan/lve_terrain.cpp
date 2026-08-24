@@ -890,15 +890,9 @@ namespace lve {
 		blocks.emplace(key, std::move(block));
 	}
 	int64_t LveTerrain::getBlockKey(int blockX, int blockY)const {
-		const uint64_t x =
-			static_cast<uint32_t>(blockX);
-
-		const uint64_t y =
-			static_cast<uint32_t>(blockY);
-
-		return static_cast<int64_t>(
-			(x << 32) | y
-			);
+		const uint64_t x =static_cast<uint32_t>(blockX);
+		const uint64_t y =static_cast<uint32_t>(blockY);
+		return static_cast<int64_t>((x << 32) | y);
 	}
 	void LveTerrain::removeOneBlock(int blockX, int blockY) {
 		const int64_t key = getBlockKey(blockX, blockY);
@@ -908,12 +902,7 @@ namespace lve {
 		const int64_t key = getBlockKey(blockX, blockY);
 		return blocks.find(key) != blocks.end();
 	}
-	float LveTerrain::getBlockHeight(
-		int blockX,
-		int blockY,
-		int localX,
-		int localY
-	) const {
+	float LveTerrain::getBlockHeight(int blockX,int blockY,int localX,int localY) const {
 		const int blockStep =
 			BlockVertexNum - 1;
 
@@ -973,10 +962,7 @@ namespace lve {
 
 		return block.heightData[index];
 	}
-	void LveTerrain::calculateBlockNormals(
-		int blockX,
-		int blockY
-	) {
+	void LveTerrain::calculateBlockNormals(int blockX,int blockY) {
 		const int64_t key =
 			getBlockKey(blockX, blockY);
 
