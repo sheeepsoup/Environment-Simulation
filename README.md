@@ -9,11 +9,6 @@
 
 ---
 
-NOTICE:
-🇬🇧 Since 2026/08/23: Development is on feature/frame-by-frame-terrain-update. main is paused. Merge back after completion. Check the feature branch for latest progress. Fallback to main if infeasible.
-
-🇨🇳 自 2026/08/23 起： 开发在 feature/frame-by-frame-terrain-update 分支进行，main 暂停更新。完成后合并回 main。最新进展请查看功能分支。无法实现则回退至 main。
-
 ## <a id="english"></a>🇬🇧 English
 
 ## 📖 Introduction
