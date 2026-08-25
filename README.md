@@ -1,6 +1,8 @@
-# 🌄 Vulkan 环境渲染模拟器
+# 🌄 Vulkan Environment Rendering Simulator
+
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="地形渲染全景" width="100%"/>
+  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain rendering overview" width="100%"/>
+  
 </p>
 
 <p align="center">
@@ -9,133 +11,538 @@
 
 ---
 
-## <a id="english"></a>🇬🇧 English
+<a id="english"></a>
 
-## 📖 Introduction
+## 🇬🇧 English
 
-A graphics rendering project learning Vulkan from scratch, aiming to build a real-time rendering simulator for natural environments including **terrain, vegetation, water bodies, clouds, and oceans**.
+### 📖 Introduction
 
-> This project is planned for long-term development. Welcome to star and follow my progress! ⭐
+A Vulkan graphics project built from scratch to explore real-time rendering techniques for large natural environments.
 
-Currently completed: terrain generation and hydraulic erosion simulation. More environmental elements will be added progressively.
+The long-term goal is to create an environment renderer featuring:
 
----
+- Procedural terrain
+- Hydraulic erosion
+- Terrain material generation
+- Oceans, lakes, and rivers
+- Vegetation
+- Atmospheric fog
+- Volumetric clouds
+- Large-scale terrain rendering and LOD
 
-## ✨ Current Features
-
-- 🏔️ **Procedural Terrain Generation** — Multi-layer noise blending based on FastNoiseLite for highly detailed terrain
-- 💧 **GPU Hydraulic Erosion Simulation** — Compute shader parallel simulation with 1 million water droplets, creating natural gullies and sediment deposits
-- 🎨 **Intelligent Texture Blending** — Automatically blends grass/dirt/rock/snow based on slope, height, normal direction, and water flow
-- 🌫️ **Atmospheric Fog** — Distance-based fog rendering for enhanced scene depth
-- 🖱️ **Free Camera Control** — WASD movement + mouse rotation for full 3D observation
-
----
-
-## 📸 Gallery
-
-<img width="1370" height="815" alt="Terrain Overview" src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" />
-
-## ✨ Features
-
-> Erosion-simulated terrain generation
-> Unique terrain texture algorithm
+> This is a long-term learning and research project. The internal architecture and rendering techniques will continue to evolve over time. ⭐
 
 ---
 
-### Key Milestones
+### ✨ Current Features
 
-- **Phase 1**: Basic Vulkan setup (SDL3 + Vulkan), simple triangle rendering
-- **Phase 2**: Terrain generation with FastNoiseLite, multi-layer noise blending
-- **Phase 3**: CPU-based hydraulic erosion (later replaced by GPU version)
-- **Phase 4**: GPU compute shader erosion with 1 million parallel droplets
-- **Phase 5**: Advanced texture blending based on slope, height, and water flow
-- **Phase 6**: (Planned) Infinite terrain chunk loading
+- 🏔️ **Procedural Terrain Generation**  
+  Multi-layer FastNoiseLite noise blending with terrain domains, hills, mountain ridges, detail noise, and domain warping.
+
+- 💧 **GPU Hydraulic Erosion**  
+  Vulkan compute shader simulation using up to one million parallel water droplets to create erosion channels, sediment deposits, and flow information.
+
+- 🎨 **Procedural Terrain Materials**  
+  Grass, soil, rock, and snow are blended according to elevation, slope, normal direction, procedural noise, and accumulated water flow.
+
+- 🪨 **Directional Weathering**  
+  Terrain materials can react to slope orientation while preserving a stable world-up-based material distribution.
+
+- 🧭 **Terrain Chunk Rendering**  
+  Terrain indices are organized by render chunks, allowing distance-based chunk culling instead of submitting the entire map as one draw.
+
+- 🌫️ **Atmospheric Fog**  
+  Distance-based fog improves depth perception and hides the distant terrain boundary.
+
+- 🖱️ **Free Camera Controller**  
+  WASD movement, vertical movement, and mouse-controlled camera rotation.
+
+- 🌊 **Initial Ocean Prototype**  
+  A basic sea-level plane has been added to validate terrain-water depth occlusion and world coverage.
+
+---
+
+### 🌊 Latest Progress: Ocean Prototype
+
+The first stage of the ocean system has been implemented.
+
+Current ocean prototype features:
+
+- Fixed sea level at `Z = 0`
+- Basic water plane covering the terrain world
+- Four vertices and six indices for initial validation
+- Terrain-water depth testing
+- Initial shallow, medium, and deep-water color presets
+- Preparation for an independent water rendering system
+
+Current water color presets:
+
+```glsl
+const vec3 deepOceanColor    = vec3(0.0, 0.1, 0.35);
+const vec3 middleOceanColor  = vec3(0.0, 0.4, 0.7);
+const vec3 shallowOceanColor = vec3(0.1, 0.6, 0.6);
+```
+
+The current ocean is still an early prototype. It does not yet include waves, transparency, reflections, refraction, shoreline foam, or depth-based color transitions.
+
+The planned final water architecture will use:
+
+```text
+LveWater
+├── Independent water vertices
+├── Independent water indices
+├── Independent GPU buffers
+├── Dedicated water shaders
+└── Dedicated graphics pipeline
+```
+
+---
+
+### 📸 Gallery
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain overview" width="33%"/>
+  <img width="1370" height="813" alt="9caaa35c5c22b2a4613e34901628eb06" src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
+  <img width="1370" height="813" alt="02d1491593335b454aa857ca3f747998" src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
+
+</p>
+
+---
+
+### 🧩 Technical Overview
+
+#### Terrain Generation
+
+The terrain is generated by combining several procedural layers:
+
+```text
+Continental and biome noise
+        ↓
+Base hills and terrain shape
+        ↓
+Ridged mountain noise
+        ↓
+Domain-warped coordinates
+        ↓
+Small-scale detail noise
+        ↓
+GPU hydraulic erosion
+```
+
+#### Hydraulic Erosion
+
+The compute shader simulates independent water droplets containing:
+
+- Position
+- Direction and inertia
+- Velocity
+- Remaining water
+- Sediment
+- Sediment capacity
+
+The erosion result is copied back into the terrain height data before terrain normals and GPU vertex buffers are generated.
+
+#### Terrain Materials
+
+Terrain material weights currently depend on:
+
+- World-space elevation
+- Terrain slope
+- Surface normal
+- Directional exposure
+- Procedural boundary noise
+- Hydraulic flow accumulation
+
+The final terrain color is produced by blending:
+
+```text
+Grass + Soil + Rock + Snow
+```
+
+#### Terrain Rendering
+
+The map uses shared vertices and chunk-contiguous index ranges.
+
+Each render chunk stores:
+
+```cpp
+struct TerrainRenderChunk {
+    uint32_t firstIndex;
+    uint32_t indexCount;
+    glm::vec3 chunkCenterPoint;
+};
+```
+
+Visible chunks are submitted independently with `vkCmdDrawIndexed`.
+
+---
+
+### 🛣️ Development Milestones
+
+- [x] **Phase 1:** Vulkan initialization with SDL3
+- [x] **Phase 2:** Basic graphics pipeline and triangle rendering
+- [x] **Phase 3:** Procedural terrain generation with FastNoiseLite
+- [x] **Phase 4:** CPU hydraulic erosion prototype
+- [x] **Phase 5:** GPU compute shader hydraulic erosion
+- [x] **Phase 6:** Procedural terrain material blending
+- [x] **Phase 7:** Terrain chunk index organization and distance culling
+- [x] **Phase 8:** Initial ocean plane prototype
+- [ ] **Phase 9:** Independent water mesh and water graphics pipeline
+- [ ] **Phase 10:** Gerstner waves and dynamic water normals
+- [ ] **Phase 11:** Depth-based shallow and deep-water colors
+- [ ] **Phase 12:** Lakes and river networks
+- [ ] **Phase 13:** Vegetation system
+- [ ] **Phase 14:** Infinite terrain streaming and LOD
+- [ ] **Phase 15:** Volumetric cloud system
+- [ ] **Phase 16:** Advanced ocean simulation using GPU FFT
 
 ---
 
 ### 🔮 Planned Features
 
-- **Phase 6**: Infinite terrain chunk loading with LOD
-- **Phase 7**: Vegetation system (trees and grass)
-- **Phase 8**: Lake and ocean rendering
-- **Phase 9**: Dynamic cloud system
+#### Water Rendering
+
+- Independent `LveWater` module
+- Dedicated water vertex format
+- Dedicated water graphics pipeline
+- Gerstner waves
+- Dynamic wave normals
+- Fresnel reflections
+- Refraction and transparency
+- Depth-based water absorption
+- Shoreline foam
+- Lake and river rendering
+- GPU FFT ocean simulation
+
+#### Terrain Rendering
+
+- Frustum culling
+- Hierarchical render chunks
+- Distance-based LOD
+- Terrain streaming
+- Persistent terrain cache
+- Background terrain generation
+
+#### Environment
+
+- Procedural grass
+- Tree placement and instancing
+- Rock and cliff generation
+- Lakes and river networks
+- Atmospheric scattering
+- Volumetric fog
+- Dynamic volumetric clouds
 
 ---
 
-### Notes on the Code
+### 🛠️ Building
 
-> The commented-out CPU erosion code in `lve_model.cpp` is a remnant of the initial implementation.
-> It is kept to show the learning path and for potential performance comparisons in the future.
+#### Dependencies
 
----
-
-## 🛠️ Building
-
-### Dependencies
-- [SDL3](https://github.com/libsdl-org/SDL) — Window and input management
+- [SDL3](https://github.com/libsdl-org/SDL) — Window creation and input
 - [Vulkan SDK](https://vulkan.lunarg.com/) — Graphics and compute API
 - [GLM](https://github.com/g-truc/glm) — Mathematics library
 - [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) — Procedural noise generation
 
+#### Build Steps
 
+1. Install the Vulkan SDK.
+2. Configure SDL3, GLM, and FastNoiseLite include/library paths.
+3. Compile the GLSL shaders:
 
-## <a id="chinese"></a>🇨🇳 中文
+```bat
+compile.bat
+```
 
-# 🌄 Vulkan 环境渲染模拟器
+4. Open the Visual Studio project.
+5. Select an `x64` Debug or Release configuration.
+6. Build and run the project.
+
+For RenderDoc debugging, the project also contains a helper script for copying shader files into the selected `x64` output directory.
+
+---
+
+### 📝 Notes About the Code
+
+The commented CPU erosion implementation in `lve_terrain.cpp` is retained as part of the project’s development history and for possible future performance comparisons.
+
+Some systems are intentionally kept in an experimental form while their final architecture is being designed.
+
+---
+
+### ⚠️ Project Status
+
+This project is currently experimental and under active development.
+
+It is intended as a Vulkan learning and graphics research project rather than a production-ready engine.
+
+Bug reports, technical suggestions, and rendering discussions are welcome.
+
+---
+
+<a id="chinese"></a>
+
+## 🇨🇳 中文
+
+### 📖 项目简介
+
+这是一个从零开始学习 Vulkan 的自然环境实时渲染项目。
+
+项目的长期目标是实现一个包含以下内容的环境渲染器：
+
+- 程序化地形
+- 水力侵蚀
+- 地形材质生成
+- 海洋、湖泊与河流
+- 植被系统
+- 环境雾效
+- 体积云
+- 大规模地形渲染与 LOD
+
+> 这是一个长期学习与研究项目，内部架构和渲染技术会随着开发持续调整。欢迎 Star 并关注项目进展！⭐
+
+---
+
+### ✨ 当前功能
+
+- 🏔️ **程序化地形生成**  
+  基于 FastNoiseLite 混合地貌、丘陵、山脊、细节噪声与 Domain Warp，生成多尺度地形。
+
+- 💧 **GPU 水力侵蚀模拟**  
+  使用 Vulkan 计算着色器并行模拟最多100万水滴，生成侵蚀沟壑、沉积区域和水流信息。
+
+- 🎨 **程序化地形材质**  
+  根据高度、坡度、法线方向、程序化噪声和水流量混合草地、泥土、岩石与雪地。
+
+- 🪨 **方向性风化效果**  
+  在世界向上方向提供稳定坡度判断的基础上，加入方向性风化修饰。
+
+- 🧭 **地形区块渲染**  
+  地形索引按照渲染区块连续排列，可根据摄像机距离剔除区块，而不是一次提交整张地图。
+
+- 🌫️ **环境雾效**  
+  使用距离雾增强场景层次，并隐藏远处地图边界。
+
+- 🖱️ **自由摄像机**  
+  支持 WASD 移动、垂直移动和鼠标旋转。
+
+- 🌊 **初步海洋原型**  
+  已加入基础海平面，用于验证地形与水面的深度遮挡和世界覆盖范围。
+
+---
+
+### 🌊 最新进展：海洋原型
+
+海洋系统的第一阶段原型已经开始实现。
+
+当前内容包括：
+
+- 海平面暂时固定在 `Z = 0`
+- 创建覆盖当前地形世界的基础水面
+- 使用4个顶点和6个索引完成初步验证
+- 验证地形与水面的深度关系
+- 加入浅水、中等水深和深水颜色预设
+- 为独立水体渲染系统做准备
+
+当前水体颜色：
+
+```glsl
+const vec3 deepOceanColor    = vec3(0.0, 0.1, 0.35);
+const vec3 middleOceanColor  = vec3(0.0, 0.4, 0.7);
+const vec3 shallowOceanColor = vec3(0.1, 0.6, 0.6);
+```
+
+当前海洋仍属于早期原型，暂时没有加入波浪、透明、反射、折射、岸边泡沫和水深颜色变化。
+
+计划中的最终水体结构：
+
+```text
+LveWater
+├── 独立水面顶点
+├── 独立水面索引
+├── 独立GPU缓冲区
+├── 独立水面着色器
+└── 独立图形管线
+```
+
+---
+
+### 📸 效果展示
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="地形渲染全景" width="100%"/>
+  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain overview" width="33%"/>
+  <img width="1370" height="813" alt="9caaa35c5c22b2a4613e34901628eb06" src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
+  <img width="1370" height="813" alt="02d1491593335b454aa857ca3f747998" src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
+
 </p>
 
+---
 
-## 📖 简介
-这是一个从零开始学习 Vulkan 的图形渲染项目，目标是实现一个包含**地形、植被、水体、云层、海洋**等自然环境的实时渲染模拟器。
-> 项目预计持续开发很长时间，欢迎收藏关注我的进展！⭐
-目前已完成地形生成与水力侵蚀模拟，后续将逐步添加更多环境要素。
-----
+### 🧩 技术概览
 
+#### 地形生成
 
-## ✨ 当前功能
-- 🏔️ **程序化地形生成** — 基于 FastNoiseLite 的多层噪声叠加，生成高细节地形
-- 💧 **GPU 水力侵蚀模拟** — 计算着色器并行模拟 100 万水滴，形成自然沟壑与沉积
-- 🎨 **智能纹理混合** — 根据坡度、高度、法线方向和水流流量，自动混合草地/泥土/岩石/雪地
-- 🌫️ **环境雾效** — 基于距离的雾效渲染，增强场景层次感
-- 🖱️ **自由摄像机控制** — WASD 移动 + 鼠标旋转，全方位观察地形
+地形由多个程序化阶段组合生成：
 
+```text
+大陆与地貌噪声
+       ↓
+基础丘陵与地形轮廓
+       ↓
+山脊噪声
+       ↓
+Domain Warp 坐标扭曲
+       ↓
+小尺度细节噪声
+       ↓
+GPU水力侵蚀
+```
 
-## 📸 效果展示
-<img width="1370" height="815" alt="faec3c47076a1febc4e78b21814e1a55" src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" />
-## ✨ 功能特性
-> 侵蚀模拟的地形生成
-> 独特的地形纹理算法
+#### 水力侵蚀
 
+计算着色器中的每个水滴包含：
 
-### 重要里程碑
-- **第一阶段**：基础Vulkan环境搭建（SDL3 + Vulkan），实现简单三角形渲染
-- **第二阶段**：使用FastNoiseLite生成地形，多层噪声叠加
-- **第三阶段**：CPU端水力侵蚀模拟（后被GPU版本替代）
-- **第四阶段**：GPU计算着色器实现侵蚀，支持100万水滴并行模拟
-- **第五阶段**：基于坡度、高度、水流量的高级纹理混合
-- **第六阶段**：（计划中）实现无限地形区块加载
+- 位置
+- 方向与惯性
+- 速度
+- 剩余水量
+- 当前携沙量
+- 最大携沙能力
 
+侵蚀完成后，高度数据会传回地形系统，再重新计算法线并创建GPU顶点缓冲区。
 
-### 🔮 计划中
-- **第六阶段**：无限地形区块加载（LOD）
-- **第七阶段**：树木与草地植被系统
-- **第八阶段**：湖泊与海洋渲染
-- **第九阶段**：动态云层系统
+#### 地形材质
 
+当前材质权重由以下信息决定：
 
-### 关于代码的一些说明
-> `lve_model.cpp` 中保留了被注释掉的CPU侵蚀代码，这是最初实现方案的遗留。
-> 保留它一方面是为了展示学习路径，另一方面也方便将来做性能对比。
-> 
+- 世界空间高度
+- 地形坡度
+- 表面法线
+- 方向性风化
+- 材质边界噪声
+- 水流累积量
 
+最终混合：
 
-## 🛠️ 编译构建
-### 依赖库
+```text
+草地 + 泥土 + 岩石 + 雪地
+```
+
+#### 地形渲染
+
+地图使用共享顶点和区块连续索引。
+
+每个渲染区块保存：
+
+```cpp
+struct TerrainRenderChunk {
+    uint32_t firstIndex;
+    uint32_t indexCount;
+    glm::vec3 chunkCenterPoint;
+};
+```
+
+渲染时使用 `vkCmdDrawIndexed` 单独提交可见区块。
+
+---
+
+### 🛣️ 开发里程碑
+
+- [x] **第一阶段：** Vulkan + SDL3 基础环境
+- [x] **第二阶段：** 图形管线与三角形绘制
+- [x] **第三阶段：** FastNoiseLite 程序化地形
+- [x] **第四阶段：** CPU 水力侵蚀原型
+- [x] **第五阶段：** GPU 计算着色器水力侵蚀
+- [x] **第六阶段：** 程序化地形材质混合
+- [x] **第七阶段：** 区块索引组织与距离剔除
+- [x] **第八阶段：** 基础海洋平面原型
+- [ ] **第九阶段：** 独立水面网格与图形管线
+- [ ] **第十阶段：** Gerstner 波浪与动态水面法线
+- [ ] **第十一阶段：** 基于水深的浅海与深海颜色
+- [ ] **第十二阶段：** 湖泊与河流网络
+- [ ] **第十三阶段：** 植被系统
+- [ ] **第十四阶段：** 无限地形加载与 LOD
+- [ ] **第十五阶段：** 体积云系统
+- [ ] **第十六阶段：** GPU FFT 高级海洋模拟
+
+---
+
+### 🔮 计划功能
+
+#### 水体渲染
+
+- 独立 `LveWater` 模块
+- 独立水面顶点格式
+- 独立水面图形管线
+- Gerstner 波浪
+- 动态波浪法线
+- 菲涅耳反射
+- 折射与透明
+- 基于水深的光线吸收
+- 岸边泡沫
+- 湖泊与河流
+- GPU FFT 海洋模拟
+
+#### 地形渲染
+
+- 视锥剔除
+- 分层渲染区块
+- 距离 LOD
+- 地形流式加载
+- 本地地形缓存
+- 后台地形生成
+
+#### 环境系统
+
+- 程序化草地
+- 树木实例化
+- 岩石与悬崖生成
+- 湖泊与河流网络
+- 大气散射
+- 体积雾
+- 动态体积云
+
+---
+
+### 🛠️ 编译构建
+
+#### 依赖库
+
 - [SDL3](https://github.com/libsdl-org/SDL) — 窗口与输入管理
-- [Vulkan SDK](https://vulkan.lunarg.com/) — 图形与计算 API
+- [Vulkan SDK](https://vulkan.lunarg.com/) — 图形与计算API
 - [GLM](https://github.com/g-truc/glm) — 数学运算库
 - [FastNoiseLite](https://github.com/Auburn/FastNoiseLite) — 程序化噪声生成
 
+#### 编译步骤
+
+1. 安装 Vulkan SDK。
+2. 配置 SDL3、GLM 和 FastNoiseLite 的头文件与库目录。
+3. 编译 GLSL 着色器：
+
+```bat
+compile.bat
+```
+
+4. 使用 Visual Studio 打开项目。
+5. 选择 `x64` Debug 或 Release 配置。
+6. 编译并运行。
+
+项目还包含用于将 shader 文件复制到 `x64` 输出目录的脚本，方便使用 RenderDoc 调试。
+
+---
+
+### 📝 关于代码
+
+`lve_terrain.cpp` 中保留了早期 CPU 水力侵蚀实现的注释代码，用于展示项目的学习过程，并为以后进行性能对比提供参考。
+
+部分系统仍处于实验阶段，其最终架构会随着项目开发继续调整。
+
+---
+
+### ⚠️ 项目状态
+
+项目目前仍处于实验性开发阶段。
+
+它主要用于学习 Vulkan 和研究实时自然环境渲染，并不是可直接用于生产环境的完整游戏引擎。
+
+欢迎提交问题、技术建议以及关于图形渲染的讨论。
