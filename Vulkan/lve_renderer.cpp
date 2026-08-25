@@ -57,7 +57,7 @@ namespace lve {
 		}
 	}
 	void LveRenderer::run(VkDevice device, LveSwapChain& swapChain, VkQueue graphicsQueue, VkQueue presentQueue, uint32_t& currentFrame,
-		VkRenderPass renderPass, LveModel& model,const std::vector<VkDescriptorSet> descriptorSets, VkPipelineLayout pipelineLayout,LveUniform uniform,
+		VkRenderPass &renderPass, LveModel& model,const std::vector<VkDescriptorSet> descriptorSets, VkPipelineLayout pipelineLayout,LveUniform &uniform,
 		const glm::mat4 modelMatirx,const glm::mat4 view,const glm::mat4 proj,LveCompute& compute,glm::vec3 cameraPos, std::vector<uint32_t>& indices,
 		LveTerrain& terrain, float renderDistance) {
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);//等待栅栏,直到渲染完成
@@ -168,6 +168,7 @@ namespace lve {
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);//绑定描述符集
 			//绘制三角形
 			terrain.drawVisibleChunks(commandBuffer, cameraPos, renderDistance);
+			terrain.drawOcean(commandBuffer);
 
 			//结束渲染通道
 			vkCmdEndRenderPass(commandBuffer);

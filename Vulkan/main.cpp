@@ -23,7 +23,7 @@
 #include<vector>
 //----------------------------------------------------------------------------------------
 // 参数控制
-const int seed = 114514;//地图种子
+const int seed = 110514;//地图种子
 const float HEIGHT_FIXED_SCALE = 10000.0f;//这个用于int->float还原,不用改
 const float cameraMaxSeeDistance = 450.0f;
 //----------------------------------------------------------------------------------------
@@ -189,6 +189,9 @@ int main() {
 		<< std::chrono::duration<float>(
 			normalEnd - normalStart).count()
 		<< " seconds\n";
+
+	//生成海洋
+	terrain.processOcean();
 
 	//放大地形
 	terrain.SetModelSize(2);

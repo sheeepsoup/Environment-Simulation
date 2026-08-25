@@ -145,7 +145,15 @@ vec3 getTextureColor(vec4 weight){
     return terrainColor;
 }
 void main(){
-   
+    //判断绘制海洋
+    if(fragWorldPosition.z == 0){
+        outColor = vec4(0.1, 0.6, 0.6,1.0);
+        float dist = length(fragCameraPos.xyz - fragWorldPosition);
+        float fogValue = 1 - smoothstep(80.0f,450.0f,dist);
+        outColor =vec4( mix(fogColor,outColor.xyz,fogValue),1.0f);
+        return;
+    }
+
     vec3 normal = normalize(fragNormal);
     vec4 TexutreAttribute = getTexureIndex(normal,fragWorldPosition / TERRAIN_SCALE);//计算纹理
     vec4 colora = vec4(getTextureColor(TexutreAttribute), 1.0);

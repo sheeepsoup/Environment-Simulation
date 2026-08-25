@@ -16,15 +16,20 @@ namespace lve {
 	public:
 		void initNoise(int seed);//初始化噪声
 		void processArea(int seed);//生成地形
+		void processOcean();//生成海洋
 		void calculateNormal();//计算法线
 		void SetModelSize(uint32_t scale) {//缩放地形大小
 			for (auto& vertex : vertices) {
 				vertex.pos *= scale;
 			}
+			for (auto& chunk : renderChunks) {
+				chunk.chunkCenterPoint *= scale;
+			}
 		};
 		void updateHeightFlow(std::vector<int32_t>& heightData, std::vector<uint32_t>& flowData, float SCALE);//更新从gpu拿到的侵蚀数据
 		void updateChunkDate(std::vector<int32_t>& heightUint, float HEIGHT_FIXED_SCALE);//更新区块数据[用于侵蚀模拟完毕后重置高度]
 		void drawVisibleChunks(VkCommandBuffer commandBuffer, const glm::vec3& cameraPosition, float renderDistance);
+		void drawOcean(VkCommandBuffer commandBuffer);//绘画海洋
 
 		struct TerrainRenderChunk {
 			uint32_t firstIndex;//indices中的索引
@@ -42,7 +47,7 @@ namespace lve {
 		float getBlockDist() { return BlockDistance; };
 		int mapVertexCount;//地图顶点大小[x/y方向]
 	private:
-		#define EROSON_EXTENT 1000000//侵蚀n次
+		#define EROSON_EXTENT 2000000//侵蚀n次
 		#define WATER_MAX_STEP 500//最大步数
 		#define MIN_WATER 0.01f//蒸发最小水量
 		#define MIN_SPEED 0.01f//最小速度
@@ -58,8 +63,10 @@ namespace lve {
 		int BlockNum = 50;//区块数量
 		int BlockVertexNum = 20;//每个区块x/y对应的顶点数,该区块含有n*n个顶点
 		float BlockDistance = 5.0;//每个区块的x/y对应的距离大小
-		uint32_t cpuThreadNum;//cpu线程数
+		const float oceanLevel = 0.0f;//海平面高度
 
+
+		uint32_t cpuThreadNum;//cpu线程数
 		class CNoise
 		{
 		public:
@@ -73,6 +80,7 @@ namespace lve {
 			FastNoiseLite mountainBaseNoise;
 			FastNoiseLite mountainRidgeNoise;
 			FastNoiseLite erosionNoise;
+			FastNoiseLite oceanNoise;
 		private:
 
 		};
@@ -93,6 +101,12 @@ namespace lve {
 		std::vector<WaterDrop> erosion;//腐蚀
 		std::vector<uint32_t> indices;//这里indice用于索引缓冲区,数字代表第n个三角形的点,详细问gpt不好解释
 		std::vector<TerrainRenderChunk> renderChunks;//用于渲染的时候的区块[抛去那些迷雾外的区块]
+		struct oceanRender
+		{
+			uint32_t oceanFirstIndex = 0;
+			uint32_t oceanIndexCount = 0;
+		};
+		oceanRender ocean;
 
 		float getHeight(float WorldX, float WorldY, bool isFirst);
 		glm::vec3 calculateNormal(float worldX, float worldY, float sampleDistance);
@@ -120,6 +134,6 @@ namespace lve {
 		float sampleHeight(const glm::vec2& position);//四点取样获取新的高度
 		void threadRunErosion();//线程跑腐蚀
 
-
+	
 	};
 }

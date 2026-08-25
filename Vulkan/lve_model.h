@@ -63,8 +63,8 @@ namespace lve {
 
 
 		void clean(VkDevice device);
-		void createVertexBuffer(LveDevice device, std::vector<Vertex>& vertices);//这是持续cpu上传的函数			[二选一] 用途:用于顶点在cpu端频繁更新的情况,例如粒子系统,动态顶点等
-		void createVertexBufferWithStaging(LveDevice lveDevice, std::vector<Vertex>& vertices);//这是上传到gpu内存后用的函数[二选一] 用途:用于顶点在cpu端不频繁更新的情况,例如静态模型,静态网格等
+		void createVertexBuffer(LveDevice &device, std::vector<Vertex>& vertices);//这是持续cpu上传的函数			[二选一] 用途:用于顶点在cpu端频繁更新的情况,例如粒子系统,动态顶点等
+		void createVertexBufferWithStaging(LveDevice &lveDevice, std::vector<Vertex>& vertices);//这是上传到gpu内存后用的函数[二选一] 用途:用于顶点在cpu端不频繁更新的情况,例如静态模型,静态网格等
 		void createIndexBufferWithStaging(LveDevice& lveDevice, std::vector<uint32_t>& indices);//创建索引缓冲区
 		void bindVertex(VkCommandBuffer commandBuffer);//绑定vertex
 		void bindIndexBuffer(VkCommandBuffer commandBuffer);//绑定索引缓冲区

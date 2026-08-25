@@ -4,7 +4,7 @@
 namespace lve {
 	class LveRenderPass {
 	public:
-		VkRenderPass getRenderPass() { return renderPass; };
+		VkRenderPass &getRenderPass() { return renderPass; };
 		void createRenderPass(VkSurfaceFormatKHR surfaceFormat, VkFormat depthFormat, VkDevice device);
 		void clean(VkDevice device);
 	private:

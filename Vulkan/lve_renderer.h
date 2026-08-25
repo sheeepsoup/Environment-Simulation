@@ -15,7 +15,7 @@ namespace lve {
 		void createCommandBuffers(VkDevice device, VkCommandPool commandPool, uint32_t commandBufferCount);
 		void createSignalSemaphore(VkDevice device, uint32_t swapChainImageCount);
 		void run(VkDevice device, LveSwapChain& swapChain, VkQueue graphicsQueue, VkQueue presentQueue, uint32_t& currentFrame,
-			VkRenderPass renderPass, LveModel& model, const std::vector<VkDescriptorSet> descriptorSets, VkPipelineLayout pipelineLayout, LveUniform uniform,
+			VkRenderPass &renderPass, LveModel& model, const std::vector<VkDescriptorSet> descriptorSets, VkPipelineLayout pipelineLayout, LveUniform &uniform,
 			const glm::mat4 modelMatirx, const glm::mat4 view, const glm::mat4 proj, LveCompute& compute, glm::vec3 cameraPos, std::vector<uint32_t>& indices,
 			LveTerrain& terrain,float renderDistance);
 		uint32_t getImageIndex() { return imageIndex; };

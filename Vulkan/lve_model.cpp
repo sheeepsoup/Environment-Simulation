@@ -1,7 +1,7 @@
 ﻿#include"lve_model.h"
 
 namespace lve {
-	void LveModel::createVertexBuffer(LveDevice device, std::vector<Vertex> &vertices) {
+	void LveModel::createVertexBuffer(LveDevice& device, std::vector<Vertex> &vertices) {
 		//创建缓冲区
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 		device.createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -12,7 +12,7 @@ namespace lve {
 
 	}
 
-	void LveModel::createVertexBufferWithStaging(LveDevice lveDevice, std::vector<Vertex>& vertices) {
+	void LveModel::createVertexBufferWithStaging(LveDevice& lveDevice, std::vector<Vertex>& vertices) {
 		//创建一个临时缓冲区,用于将数据从CPU传输到GPU
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 		//创建临时缓冲区

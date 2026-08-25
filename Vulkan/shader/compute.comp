@@ -1,4 +1,4 @@
-﻿#version 450
+#version 450
 layout(local_size_x = 64) in;
 layout(binding = 0) buffer HeightBuffer {
    int heights_int[];
@@ -17,6 +17,8 @@ const float MIN_SPEED = 0.01;//最小速度
 const float capacityFactor = 4.0;//携沙最大力度
 const float erosionRate = 0.1;//侵蚀力度
 const float depositionRate = 0.03;//沉积力度
+const int EROSION_RADIUS = 2;//侵蚀宽度
+const int DEPOSITION_RADIUS = 1;//沉积的宽度
 const float inertia = 0.6;
 const float gravity = 4.0;
 const float SCALE = 10000.0;
@@ -42,27 +44,79 @@ float sampleHeight(vec2 pos) {
     return mix(mix(h00, h10, f.x), mix(h01, h11, f.x), f.y);
 }
 //修改高度
-void addHeight(vec2 pos, float delta) {
-    ivec2 p = ivec2(floor(pos));
-    vec2 f = pos - vec2(p);
-    int w = pc.width;
+void addHeight(vec2 pos, float delta, int radius) {
+	int w = pc.width;
+	ivec2 center = ivec2(floor(pos));
 
-    uint idx00 = uint(p.y * w + p.x);
-    uint idx10 = uint(p.y * w + p.x + 1);
-    uint idx01 = uint((p.y + 1) * w + p.x);
-    uint idx11 = uint((p.y + 1) * w + p.x + 1);
+	float radiusFloat = float(radius) + 0.5;
+	float totalWeight = 0.0;
 
-    float w00 = (1.0 - f.x) * (1.0 - f.y);
-    float w10 = f.x * (1.0 - f.y);
-    float w01 = (1.0 - f.x) * f.y;
-    float w11 = f.x * f.y;
+	//先计算总权重
+	for (int y = -radius; y <= radius; y++) {
+		for (int x = -radius; x <= radius; x++) {
+			ivec2 point = center + ivec2(x, y);
 
-   atomicAdd(heights_int[idx00], int(delta * w00 * SCALE + 0.5));
-    atomicAdd(heights_int[idx10], int(delta * w10 * SCALE + 0.5));
-    atomicAdd(heights_int[idx01], int(delta * w01 * SCALE + 0.5));
-    atomicAdd(heights_int[idx11], int(delta * w11 * SCALE + 0.5));
+			if (point.x < 0 || point.x >= w ||
+				point.y < 0 || point.y >= w) {
+				continue;
+			}
+
+			float distanceToCenter =
+				length(vec2(point) - pos);
+
+			if (distanceToCenter > radiusFloat) {
+				continue;
+			}
+
+			float weight =
+				1.0 - distanceToCenter / radiusFloat;
+
+			totalWeight += weight;
+		}
+	}
+
+	if (totalWeight <= 0.0) {
+		return;
+	}
+
+	//把高度变化分配给范围内的顶点
+	for (int y = -radius; y <= radius; y++) {
+		for (int x = -radius; x <= radius; x++) {
+			ivec2 point = center + ivec2(x, y);
+
+			if (point.x < 0 || point.x >= w ||
+				point.y < 0 || point.y >= w) {
+				continue;
+			}
+
+			float distanceToCenter =
+				length(vec2(point) - pos);
+
+			if (distanceToCenter > radiusFloat) {
+				continue;
+			}
+
+			float weight =
+				1.0 - distanceToCenter / radiusFloat;
+
+			weight /= totalWeight;
+
+			uint index =
+				uint(point.y * w + point.x);
+
+			int heightChange =
+				int(round(delta * weight * SCALE));
+
+			atomicAdd(
+				heights_int[index],
+				heightChange
+			);
+		}
+	}
 }
-
+float random01(uint value) {
+	return float(hash(value)) / 4294967295.0;
+}
 void main() {
     uint dropletID = gl_GlobalInvocationID.x;  //水滴编号
     if (dropletID >= pc.waterDorpNum) return;          //如果你只跑 1e6 次
@@ -71,8 +125,8 @@ void main() {
     uint localSeed = dropletID * 114514u;
     uint seedX = dropletID * 114514u + 12345u;
     uint seedY = dropletID * 114514u + 98765u;
-      float x = 1.0 + float(hash(seedX) % (pc.width - 3));
-    float y = 1.0 + float(hash(seedY) % (pc.width - 3));
+    float x = 1.0 + random01(seedX) * float(pc.width - 3);
+    float y = 1.0 + random01(seedY) * float(pc.width - 3);
     vec2  pos = vec2(x, y);
     vec2  dir = vec2(0.0);
     float speed = 1.0;
@@ -122,7 +176,7 @@ void main() {
             //沉积（上坡）
             float deposit = min(deltaH, sediment);
             deposit = clamp(deposit, 0.0, 0.05);
-            addHeight(oldPos, deposit);
+            addHeight(oldPos, deposit,DEPOSITION_RADIUS);
             sediment -= deposit;
         } else if (sediment < maxSediment) {
             //侵蚀
@@ -130,16 +184,16 @@ void main() {
             eroded = min(eroded, -deltaH);
             eroded = clamp(eroded, 0.0, 0.05);
             sediment += eroded;
-            addHeight(oldPos, -eroded);
+            addHeight(oldPos, -eroded,EROSION_RADIUS);
         } else {
             //沉积
             float deposit = (sediment - maxSediment) * depositionRate;
             deposit = min(deposit, sediment);
             deposit = clamp(deposit, 0.0, 0.05);
-            addHeight(oldPos, deposit);
+            addHeight(oldPos, deposit,DEPOSITION_RADIUS);
             sediment -= deposit;
         }
     }
     // 最后把剩余泥沙沉积在最后位置
-    if (sediment > 0.0) addHeight(pos, sediment);
+    if (sediment > 0.0) addHeight(pos, sediment,DEPOSITION_RADIUS);
 }

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <array>
-#define EROSON_EXTENT 1000000//侵蚀n次
+#define EROSON_EXTENT 2000000//侵蚀n次
 namespace lve {
 
     LveCompute::LveCompute(LveDevice& device, const std::string& computeShaderPath)

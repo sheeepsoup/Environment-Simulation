@@ -90,6 +90,14 @@ namespace lve {
 		noise.mountainBaseNoise.SetFractalLacunarity(2.0f);
 		noise.mountainBaseNoise.SetFractalGain(0.45f);
 
+		//海洋
+		noise.oceanNoise.SetSeed(seed + 10);
+		noise.oceanNoise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
+		noise.oceanNoise.SetFrequency(0.002f);//海洋频率
+		noise.oceanNoise.SetFractalType(FastNoiseLite::FractalType_FBm);
+		noise.oceanNoise.SetFractalOctaves(3);
+		noise.oceanNoise.SetFractalLacunarity(2.0f);
+		noise.oceanNoise.SetFractalGain(0.5f);
 
 	}
 	float LveTerrain::smoothstep(float edge0, float edge1, float value) {
@@ -224,7 +232,7 @@ namespace lve {
 				}
 				//生成完一个区块了
 				const uint32_t chunkIndexCount = nowIndex - chunkFirstIndex;
-				renderChunks.push_back({ chunkFirstIndex,chunkIndexCount ,glm::vec3(x * BlockDistance,y * BlockDistance,0.0f) });
+				renderChunks.push_back({ chunkFirstIndex,chunkIndexCount ,glm::vec3((x + 0.5f) * BlockDistance,(y + 0.5f) * BlockDistance,0.0f) });
 			}
 		}
 		//锈蚀模拟
@@ -311,7 +319,14 @@ namespace lve {
 		const float detailValue = noise.detailNoise.GetNoise(warpedX, warpedY);
 		const float detailStrength = glm::mix(0.15f, 0.60f, MontainMask);
 
-		const float finalHeight = glm::mix(hillHeight, mountainHeight, MontainMask);
+		const float terrainShape = glm::mix(hillHeight, mountainHeight, MontainMask);//大陆地形
+		//获取海洋
+		float oceanValue = noise.oceanNoise.GetNoise(WorldX, WorldY) * 0.5f + 0.5f;
+		float landMask = smoothstep(0.42f, 0.58f, oceanValue);//0海底 0.2近海 0.5海岸 0.8陆地边缘 1.0内陆
+		float oceanFloor = -8.0f;//海底
+		float landBase = 2.0f;//基础高度
+		const float baseHeight = glm::mix(oceanFloor,landBase,landMask);//对应的海洋地形
+		const float finalHeight = baseHeight + terrainShape * landMask;
 		return finalHeight + detailValue * detailStrength;
 	}
 	glm::vec3 LveTerrain::calculateNormal(float worldX, float worldY, float sampleDistance) {
@@ -614,5 +629,27 @@ namespace lve {
 			if (dist > renderDistance + BlockDistance)continue;
 			vkCmdDrawIndexed(commandBuffer, chunk.indexCount, 1, chunk.firstIndex, 0, 0);
 		}
+	}
+	void LveTerrain::processOcean() {
+		const uint32_t baseVertex = static_cast<uint32_t>(vertices.size());
+		ocean.oceanFirstIndex = static_cast<uint32_t>(indices.size());
+
+		vertices.push_back({ glm::vec3(-BlockNum * BlockDistance, BlockDistance * BlockNum, 0.0f), glm::vec3(0.0f, 0.25f, 0.55f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f });
+		vertices.push_back({ glm::vec3(BlockNum * BlockDistance, BlockDistance * BlockNum, 0.0f), glm::vec3(0.0f, 0.25f, 0.55f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f });
+		vertices.push_back({ glm::vec3(BlockNum * BlockDistance, -BlockDistance * BlockNum, 0.0f), glm::vec3(0.0f, 0.25f, 0.55f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f });
+		vertices.push_back({ glm::vec3(-BlockNum * BlockDistance, -BlockDistance * BlockNum, 0.0f), glm::vec3(0.0f, 0.25f, 0.55f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f });
+
+		indices.push_back(baseVertex);
+		indices.push_back(baseVertex + 3);
+		indices.push_back(baseVertex + 2);
+
+		indices.push_back(baseVertex + 2);
+		indices.push_back(baseVertex + 1);
+		indices.push_back(baseVertex);
+
+		ocean.oceanIndexCount = 6;
+	}
+	void LveTerrain::drawOcean(VkCommandBuffer commandBuffer) {
+		vkCmdDrawIndexed(commandBuffer, ocean.oceanIndexCount, 1, ocean.oceanFirstIndex, 0, 0);
 	}
 }
