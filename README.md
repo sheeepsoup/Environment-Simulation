@@ -102,9 +102,8 @@ LveWater
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain overview" width="33%"/>
-  <img width="1370" height="813" alt="9caaa35c5c22b2a4613e34901628eb06" src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
-  <img width="1370" height="813" alt="02d1491593335b454aa857ca3f747998" src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
-
+  <img src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
+  <img src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
 </p>
 
 ---
@@ -371,9 +370,8 @@ LveWater
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain overview" width="33%"/>
-  <img width="1370" height="813" alt="9caaa35c5c22b2a4613e34901628eb06" src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
-  <img width="1370" height="813" alt="02d1491593335b454aa857ca3f747998" src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
-
+  <img src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
+  <img src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
 </p>
 
 ---
