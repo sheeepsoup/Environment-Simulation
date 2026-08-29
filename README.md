@@ -11,6 +11,18 @@
 
 ---
 
+## 📌 源码状态 | Source Code Status
+
+**中文：**
+非常抱歉，由于该项目目前处于研究阶段，源代码暂时闭源。此前阶段仍保持开源状态。在此期间，README 将持续更新。待研究成果完毕后，源码将会重新开放，并开启下一阶段的开发。
+
+**English：**
+We apologize for the inconvenience. As this project is currently in the research phase, the source code is temporarily closed-source. Previous stages remain open-source. During this period, the README will continue to be updated. Once the research is completed, the source code will be made available again, and the next development phase will begin.
+
+---
+
+感谢您的理解与支持！ | Thank you for your understanding and support! 🙏
+
 <a id="english"></a>
 
 ## 🇬🇧 English
