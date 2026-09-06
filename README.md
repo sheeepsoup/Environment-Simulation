@@ -19,6 +19,11 @@
 **English：**
 We apologize for the inconvenience. As this project is currently in the research phase, the source code is temporarily closed-source. Previous stages remain open-source. During this period, the README will continue to be updated. Once the research is completed, the source code will be made available again, and the next development phase will begin.
 
+<p align="center">
+  <a href="#research-english">🇬🇧 研究进展 (English)</a> · 
+  <a href="#research-chinese">🇨🇳 研究进展（中文）</a> · 
+</p>
+
 ---
 
 感谢您的理解与支持！ | Thank you for your understanding and support! 🙏
@@ -556,3 +561,58 @@ compile.bat
 它主要用于学习 Vulkan 和研究实时自然环境渲染，并不是可直接用于生产环境的完整游戏引擎。
 
 欢迎提交问题、技术建议以及关于图形渲染的讨论。
+
+
+
+---
+
+<a id="research-english"></a>
+## 🔬 Research Content — English
+
+## 🧪 GPU Hydraulic Erosion Experiment
+
+### Test Environment
+
+| Item | Configuration |
+|---|---|
+| GPU | NVIDIA GeForce RTX 5060 Laptop GPU |
+| Graphics API | Vulkan |
+| Erosion Implementation | Vulkan Compute Shader |
+| Total Droplets | `2,000,000` |
+| Max Steps per Droplet | `500` |
+| Terrain Vertex Grid | `1882 × 1882` |
+
+### Current Test Results
+
+| Stage | Time |
+|---|---:|
+| Terrain Generation | `0.452565 s` |
+| GPU Hydraulic Erosion | `4.886600 s` -> `3.95707 s` |
+| Normal Calculation | `0.076976 s` |
+
+---
+
+<a id="research-chinese"></a>
+## 🔬 研究内容 — 中文
+## 🧪 GPU 水力侵蚀实验
+
+### 测试环境
+
+| 项目 | 配置 |
+|---|---|
+| GPU | NVIDIA GeForce RTX 5060 Laptop GPU |
+| 图形 API | Vulkan |
+| 侵蚀实现 | Vulkan Compute Shader |
+| 总水滴数 | `2,000,000` |
+| 单水滴最大步数 | `500` |
+| 地形顶点网格 | `1882 × 1882` |
+
+### 当前测试结果
+
+| 阶段 | 耗时 |
+|---|---:|
+| 地形生成 | `0.452565 s` |
+| GPU 水力侵蚀 | `4.886600 s` -> `3.95707 s` |
+| 法线计算 | `0.076976 s` |
+
+---
