@@ -1,8 +1,10 @@
 # 🌄 Vulkan Environment Rendering Simulator
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain rendering overview" width="100%"/>
-  
+  <img width="25%" alt="af2eb244abcf3f696b860cc6541d11b1" src="https://github.com/user-attachments/assets/a705854e-d8d0-4130-a0b3-1cbc4ee61e98" />
+  <img width="25%" alt="6f1191da3c23a2a78166424e793274b0" src="https://github.com/user-attachments/assets/69c4c278-339d-4ba7-a6e3-17d4ccf830b6" />
+  <img width="25%" alt="b4687533e7a16bb5fea05a2a41cd7f02" src="https://github.com/user-attachments/assets/05154560-fc08-4412-961a-94eed8068d8e" />
+  <img width="25%" alt="88a3f3db99024220dba5cc02d46f54c9" src="https://github.com/user-attachments/assets/e1f14504-316c-4c09-b9f3-7c1f26e9a8d2" />
 </p>
 
 <p align="center">
@@ -71,6 +73,17 @@ The long-term goal is to create an environment renderer featuring:
 - 🌫️ **Atmospheric Fog**  
   Distance-based fog improves depth perception and hides the distant terrain boundary.
 
+- 🌑 **Directional Shadow Mapping**  
+  A dedicated shadow pass renders terrain depth into a 2048×2048 shadow map using an orthographic light matrix. The main pass samples the shadow map with hardware PCF comparison and a 3×3 filter to soften edges. Shadow bias is exposed to the shader through the UBO.
+
+- 🎛️ **Runtime Debug Panel (ImGui)**  
+  A toggleable in-game panel (press `TAB`) exposes live controls for:
+  - Terrain seed (with regenerate button)
+  - Hydraulic erosion droplet count (with rerun button)
+  - Sun direction
+  - Shadow bias
+  - Debug statistics (FPS, erosion stats)
+
 - 🖱️ **Free Camera Controller**  
   WASD movement, vertical movement, and mouse-controlled camera rotation.
 
@@ -118,9 +131,10 @@ LveWater
 ### 📸 Gallery
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain overview" width="33%"/>
-  <img src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
-  <img src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
+  <img width="25%" alt="af2eb244abcf3f696b860cc6541d11b1" src="https://github.com/user-attachments/assets/a705854e-d8d0-4130-a0b3-1cbc4ee61e98" />
+  <img width="25%" alt="6f1191da3c23a2a78166424e793274b0" src="https://github.com/user-attachments/assets/69c4c278-339d-4ba7-a6e3-17d4ccf830b6" />
+  <img width="25%" alt="b4687533e7a16bb5fea05a2a41cd7f02" src="https://github.com/user-attachments/assets/05154560-fc08-4412-961a-94eed8068d8e" />
+  <img width="25%" alt="88a3f3db99024220dba5cc02d46f54c9" src="https://github.com/user-attachments/assets/e1f14504-316c-4c09-b9f3-7c1f26e9a8d2" />
 </p>
 
 ---
@@ -191,6 +205,39 @@ struct TerrainRenderChunk {
 
 Visible chunks are submitted independently with `vkCmdDrawIndexed`.
 
+#### Directional Shadow Mapping
+
+A shadow render pass runs before the main pass on the same command buffer:
+
+```text
+Build orthographic light view-projection
+        ↓
+Render terrain depth into 2048×2048 shadow map
+        ↓
+Main pass samples shadow map with sampler2DShadow
+        ↓
+Hardware PCF comparison + 3×3 blur
+        ↓
+Shadow factor blends into diffuse lighting
+```
+
+Key details:
+
+- Light matrix is rebuilt every frame from the current sun direction
+- `near` / `far` are tightly fitted around the terrain to preserve depth precision
+- `bias` is passed through the UBO and adjustable in ImGui
+- PCF uses `textureSize` to convert pixels to UV offsets
+
+#### Runtime Debug Panel
+
+An ImGui overlay is rendered directly into the main command buffer. It provides:
+
+- Live seed change with terrain regeneration
+- Erosion droplet count slider and rerun trigger
+- Sun direction sliders
+- Shadow bias slider
+- Erosion statistics read back from the GPU
+
 ---
 
 ### 🛣️ Development Milestones
@@ -203,14 +250,16 @@ Visible chunks are submitted independently with `vkCmdDrawIndexed`.
 - [x] **Phase 6:** Procedural terrain material blending
 - [x] **Phase 7:** Terrain chunk index organization and distance culling
 - [x] **Phase 8:** Initial ocean plane prototype
-- [ ] **Phase 9:** Independent water mesh and water graphics pipeline
-- [ ] **Phase 10:** Gerstner waves and dynamic water normals
-- [ ] **Phase 11:** Depth-based shallow and deep-water colors
-- [ ] **Phase 12:** Lakes and river networks
-- [ ] **Phase 13:** Vegetation system
-- [ ] **Phase 14:** Infinite terrain streaming and LOD
-- [ ] **Phase 15:** Volumetric cloud system
-- [ ] **Phase 16:** Advanced ocean simulation using GPU FFT
+- [x] **Phase 9:** Directional shadow mapping with PCF
+- [x] **Phase 10:** Runtime debug panel with ImGui (seed / erosion / light / bias)
+- [ ] **Phase 11:** Independent water mesh and water graphics pipeline
+- [ ] **Phase 12:** Gerstner waves and dynamic water normals
+- [ ] **Phase 13:** Depth-based shallow and deep-water colors
+- [ ] **Phase 14:** Lakes and river networks
+- [ ] **Phase 15:** Vegetation system
+- [ ] **Phase 16:** Infinite terrain streaming and LOD
+- [ ] **Phase 17:** Volumetric cloud system
+- [ ] **Phase 18:** Advanced ocean simulation using GPU FFT
 
 ---
 
@@ -339,6 +388,17 @@ Bug reports, technical suggestions, and rendering discussions are welcome.
 - 🌫️ **环境雾效**  
   使用距离雾增强场景层次，并隐藏远处地图边界。
 
+- 🌑 **平行光阴影**  
+  在主渲染通道前增加独立阴影通道，使用正交光矩阵将地形深度渲染到 2048×2048 阴影贴图。主通道使用 `sampler2DShadow` 硬件比较和 3×3 PCF 滤波柔化阴影边缘，阴影 bias 通过 UBO 传入并可在 ImGui 中调节。
+
+- 🎛️ **运行时调试面板（ImGui）**  
+  按 `TAB` 打开游戏内面板，可实时控制：
+  - 地形种子（附带重新生成按钮）
+  - 水力侵蚀水滴数量（附带重跑按钮）
+  - 阳光方向
+  - 阴影 bias
+  - 调试统计数据（FPS、侵蚀统计）
+
 - 🖱️ **自由摄像机**  
   支持 WASD 移动、垂直移动和鼠标旋转。
 
@@ -386,9 +446,10 @@ LveWater
 ### 📸 效果展示
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/16667eff-fd7d-44ea-857f-8fa578816c2a" alt="Terrain overview" width="33%"/>
-  <img src="https://github.com/user-attachments/assets/b9e0a08b-4c49-4e3f-bfcf-02b6e82aeb36" alt="Terrain overview" width="33%"/>
-  <img src="https://github.com/user-attachments/assets/7abbd89b-b071-4cee-95c8-caf09a592ade" alt="Terrain overview" width="33%"/>
+  <img width="25%" alt="af2eb244abcf3f696b860cc6541d11b1" src="https://github.com/user-attachments/assets/a705854e-d8d0-4130-a0b3-1cbc4ee61e98" />
+  <img width="25%" alt="6f1191da3c23a2a78166424e793274b0" src="https://github.com/user-attachments/assets/69c4c278-339d-4ba7-a6e3-17d4ccf830b6" />
+  <img width="25%" alt="b4687533e7a16bb5fea05a2a41cd7f02" src="https://github.com/user-attachments/assets/05154560-fc08-4412-961a-94eed8068d8e" />
+  <img width="25%" alt="88a3f3db99024220dba5cc02d46f54c9" src="https://github.com/user-attachments/assets/e1f14504-316c-4c09-b9f3-7c1f26e9a8d2" />
 </p>
 
 ---
@@ -459,6 +520,39 @@ struct TerrainRenderChunk {
 
 渲染时使用 `vkCmdDrawIndexed` 单独提交可见区块。
 
+#### 平行光阴影
+
+在主渲染通道之前，同一条命令缓冲区中先执行阴影通道：
+
+```text
+构建正交光视图投影矩阵
+        ↓
+将地形深度渲染到 2048×2048 阴影贴图
+        ↓
+主通道使用 sampler2DShadow 采样阴影贴图
+        ↓
+硬件 PCF 比较 + 3×3 滤波
+        ↓
+阴影系数混入漫反射光照
+```
+
+关键细节：
+
+- 光照矩阵每帧根据当前阳光方向重新计算
+- `near` / `far` 紧贴地形，避免深度精度浪费
+- `bias` 通过 UBO 传入，可在 ImGui 中实时调节
+- PCF 使用 `textureSize` 把像素转换为 UV 偏移
+
+#### 运行时调试面板
+
+ImGui 覆盖层直接在主命令缓冲区中绘制，提供：
+
+- 实时修改种子并重新生成地形
+- 侵蚀水滴数量滑块与重跑按钮
+- 阳光方向滑块
+- 阴影 bias 滑块
+- GPU 回读的侵蚀统计数据
+
 ---
 
 ### 🛣️ 开发里程碑
@@ -471,14 +565,16 @@ struct TerrainRenderChunk {
 - [x] **第六阶段：** 程序化地形材质混合
 - [x] **第七阶段：** 区块索引组织与距离剔除
 - [x] **第八阶段：** 基础海洋平面原型
-- [ ] **第九阶段：** 独立水面网格与图形管线
-- [ ] **第十阶段：** Gerstner 波浪与动态水面法线
-- [ ] **第十一阶段：** 基于水深的浅海与深海颜色
-- [ ] **第十二阶段：** 湖泊与河流网络
-- [ ] **第十三阶段：** 植被系统
-- [ ] **第十四阶段：** 无限地形加载与 LOD
-- [ ] **第十五阶段：** 体积云系统
-- [ ] **第十六阶段：** GPU FFT 高级海洋模拟
+- [x] **第九阶段：** 平行光阴影与 PCF 滤波
+- [x] **第十阶段：** ImGui 运行时调试面板（种子 / 侵蚀 / 光照 / bias）
+- [ ] **第十一阶段：** 独立水面网格与图形管线
+- [ ] **第十二阶段：** Gerstner 波浪与动态水面法线
+- [ ] **第十三阶段：** 基于水深的浅海与深海颜色
+- [ ] **第十四阶段：** 湖泊与河流网络
+- [ ] **第十五阶段：** 植被系统
+- [ ] **第十六阶段：** 无限地形加载与 LOD
+- [ ] **第十七阶段：** 体积云系统
+- [ ] **第十八阶段：** GPU FFT 高级海洋模拟
 
 ---
 
@@ -561,8 +657,6 @@ compile.bat
 它主要用于学习 Vulkan 和研究实时自然环境渲染，并不是可直接用于生产环境的完整游戏引擎。
 
 欢迎提交问题、技术建议以及关于图形渲染的讨论。
-
-
 
 ---
 
